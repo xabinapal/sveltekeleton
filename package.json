@@ -44,6 +44,7 @@
 		"wrangler": "4.118.0"
 	},
 	"dependencies": {
+		"@humanspeak/svelte-headless-table": "6.0.12",
 		"kysely": "0.29.4",
 		"kysely-d1": "0.4.0",
 		"sveltekit-superforms": "2.30.2",

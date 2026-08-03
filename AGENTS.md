@@ -19,6 +19,7 @@ predictability matter more than cleverness.
 - **Kysely** ORM with code-based migrations (no raw SQL).
 - **Tailwind CSS v4 + daisyUI** for all UI (see [DESIGN.md](DESIGN.md)).
 - **Superforms + Zod** for schema-driven forms and validation.
+- **Svelte Headless Table** for data tables, filtering, sorting, and pagination.
 - **Vite** as the build/dev server.
 - **mise** manages tools (Node, npm) and runs every task.
 - **ESLint + Prettier** for lint/format, **svelte-check** for types, **vitest**
@@ -98,6 +99,12 @@ children?.()}`; use optional chaining for optional snippets.
   don't hand-roll form state or use SvelteKit's raw `enhance` action directly.
   Use `throw error(status, …)` for unexpected errors and
   `throw redirect(status, …)` for auth/redirects.
+- **Data tables.** Use `@humanspeak/svelte-headless-table` and its plugins for
+  filtering, sorting, pagination, selection, and other table state; don't
+  implement these behaviors manually. Use client-side plugins only for bounded,
+  already-loaded datasets. For large or remote datasets, use server-side plugin
+  mode and keep query state in the URL. Render semantic table markup, preserve
+  accessible labels and sort state, and style it with daisyUI table primitives.
 - **SSR safety.** Never store per-user data in module-level `let` or global
   `$state` — it leaks across requests on the server. Per-user data flows through
   `event.locals` and is returned from `load`. (App-wide singletons like the

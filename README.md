@@ -9,6 +9,7 @@ SvelteKit + Cloudflare apps into a fast, common starting point.
 - **SvelteKit 2** + **Svelte 5** (runes)
 - **Vite 8** with the devtools-json plugin
 - **Tailwind CSS v4** (CSS-first, via the `@tailwindcss/vite` plugin) with **daisyUI** components
+- **Superforms + Zod** for schema-driven forms and **Svelte Headless Table** for data grids
 - **Cloudflare Workers** deployment via `@sveltejs/adapter-cloudflare` + Wrangler
 - **Cloudflare D1** database accessed through the **Kysely** ORM with code-based migrations
 - **TypeScript 6** in strict mode with `svelte-check`
@@ -187,6 +188,7 @@ src/
   app.css              tailwind import and daisyui plugin
   hooks.server.ts      creates the db client, runs migrations, emits access logs
   lib/site.ts          site metadata, manifest settings, and indexability flag
+  lib/components/      reusable daisyUI components, including the data table
   lib/server/logger.ts structured logfmt logger
   lib/server/database/ kysely orm layer
     schema.ts          table and database types

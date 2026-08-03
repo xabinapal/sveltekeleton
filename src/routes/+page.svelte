@@ -1,8 +1,31 @@
 <script lang="ts">
 	import { untrack } from "svelte";
 	import { superForm } from "sveltekit-superforms";
+	import DataTable from "$lib/components/data-table.svelte";
+	import type { DataTableColumn, DataTableRow } from "$lib/components/data-table";
 	import { site } from "$lib/site";
 	import type { PageProps } from "./$types";
+
+	const capabilities: DataTableRow[] = [
+		{ id: "routing", capability: "Routing", library: "SvelteKit", layer: "Application" },
+		{ id: "forms", capability: "Forms", library: "Superforms + Zod", layer: "Application" },
+		{
+			id: "tables",
+			capability: "Data tables",
+			library: "Svelte Headless Table",
+			layer: "Application",
+		},
+		{ id: "database", capability: "Database", library: "Kysely + D1", layer: "Data" },
+		{ id: "styles", capability: "Components", library: "daisyUI", layer: "Interface" },
+		{ id: "css", capability: "Styling", library: "Tailwind CSS", layer: "Interface" },
+		{ id: "runtime", capability: "Runtime", library: "Cloudflare Workers", layer: "Platform" },
+		{ id: "testing", capability: "Unit testing", library: "Vitest", layer: "Quality" },
+	];
+	const capabilityColumns: DataTableColumn[] = [
+		{ key: "capability", label: "Capability" },
+		{ key: "library", label: "Library" },
+		{ key: "layer", label: "Layer" },
+	];
 
 	let { data }: PageProps = $props();
 	const { form, errors, enhance, message, submitting } = superForm(untrack(() => data.form));
@@ -55,4 +78,14 @@
 	{#if $message}
 		<div class="alert alert-success max-w-sm" role="status">{$message}</div>
 	{/if}
+
+	<div class="divider"></div>
+
+	<div class="flex w-full flex-col gap-4 text-left">
+		<div>
+			<h2 class="text-2xl font-bold">Starter capabilities</h2>
+			<p class="opacity-70">Filter, sort, and paginate the included application stack.</p>
+		</div>
+		<DataTable columns={capabilityColumns} rows={capabilities} searchLabel="Filter capabilities" />
+	</div>
 </section>
