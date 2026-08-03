@@ -137,9 +137,18 @@ children?.()}`; use optional chaining for optional snippets.
   files. Each migration lives in `migrations/NNNN_name.ts` and is registered in
   `migrations/index.ts`. Give every migration a `down` if you want it to support
   `mise run reset`.
-- Migrations run automatically on startup and on demand via `mise run migrate`.
+- Migrations run automatically before the first request and on demand via
+  `mise run migrate`. Initialization is single-flight per Worker isolate,
+  migration failures fail the request and are retried on the next request.
+- D1 does not support the transactions or cross-isolate locks expected by
+  Kysely's SQLite migrator. Every migration must therefore be replay-safe; use
+  `ifNotExists`, conflict handling, and other idempotent operations where needed.
+- The custom D1 introspector supports Kysely migration discovery only. General
+  `db.introspection` calls fail explicitly because Workers-bound D1 does not
+  expose the PRAGMA metadata required for a correct result.
 - Wrangler provides a local D1 database under `.wrangler/`; production requires
-  replacing the `database_id` placeholder in `wrangler.jsonc`.
+  replacing the `database_id` placeholder in `wrangler.jsonc`. Local scripts
+  must set `remoteBindings: false` explicitly.
 
 ### Workers KV
 

@@ -6,7 +6,7 @@ import type { KeyValueStore } from "$lib/server/kv";
 declare global {
 	namespace App {
 		interface Locals {
-			db: Kysely<Database> | undefined;
+			db: Kysely<Database>;
 			kv: KeyValueStore | undefined;
 		}
 		interface Platform {

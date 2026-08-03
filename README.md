@@ -93,7 +93,9 @@ schema builder — never raw SQL.
 In `vite dev`, the `adapter-cloudflare` platform proxy exposes the D1 binding
 (`event.platform.env.DB`) backed by a local SQLite database stored under
 `.wrangler/`. Migrations also run automatically on the first request after a
-server start, so the schema is always ready.
+server start. Concurrent requests in one Worker isolate share the same
+initialization. A migration failure fails the request and is retried rather than
+silently serving against a stale schema.
 
 To run migrations explicitly against the local database (without starting the
 dev server):
@@ -110,7 +112,9 @@ mise run reset
 ```
 
 This rolls all migrations back through their `down` methods and re-applies them,
-so each migration needs a `down` for the reset to fully clear state.
+so each migration must have a `down`; reset aborts before changing the database
+if an irreversible migration is registered. Both database scripts explicitly
+disable remote bindings.
 
 ### Writing migrations
 
@@ -134,7 +138,14 @@ export const example: Migration = {
 
 The Kysely schema builder keeps every schema change type-checked and SQL-free.
 Migrations are bundled into the Worker (no filesystem access at runtime), so
-they also run on cold starts in production.
+they also run on cold starts in production. D1 cannot provide transactions or
+cross-isolate migration locks through this dialect, so every migration must be
+safe to retry. Use `ifNotExists`, conflict handling, and equivalent idempotent
+operations where needed.
+
+The D1 dialect exposes only the table discovery required by Kysely migrations.
+General Kysely schema introspection throws explicitly because Workers-bound D1
+does not expose the PRAGMA metadata needed to return correct column details.
 
 ### Production
 

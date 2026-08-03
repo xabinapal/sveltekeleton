@@ -8,6 +8,7 @@ export default {
 		adapter: adapter({
 			platformProxy: {
 				configPath: "wrangler.jsonc",
+				remoteBindings: false,
 			},
 		}),
 		env: {
