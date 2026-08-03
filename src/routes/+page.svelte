@@ -1,12 +1,12 @@
 <script lang="ts">
-	import { APP_META_DESCRIPTION, APP_META_TITLE } from "$env/static/public";
+	import { site } from "$lib/site";
 
 	let { data, form } = $props();
 </script>
 
 <section class="flex flex-col items-center justify-center gap-6 py-16 text-center">
-	<h1 class="text-4xl font-bold text-primary">{APP_META_TITLE}</h1>
-	<p class="max-w-prose text-lg opacity-70">{APP_META_DESCRIPTION}</p>
+	<h1 class="text-4xl font-bold text-primary">{site.title}</h1>
+	<p class="max-w-prose text-lg opacity-70">{site.description}</p>
 
 	<div class="flex flex-wrap justify-center gap-2">
 		<span class="badge badge-outline badge-primary">SvelteKit</span>

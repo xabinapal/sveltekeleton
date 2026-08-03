@@ -1,30 +1,24 @@
 <script lang="ts">
 	import "../app.css";
 
-	import {
-		APP_BASE_URL,
-		APP_META_AUTHOR,
-		APP_META_DESCRIPTION,
-		APP_META_KEYWORDS,
-		APP_META_THEME_COLOR,
-		APP_META_TITLE,
-	} from "$env/static/public";
+	import { APP_BASE_URL } from "$env/static/public";
+	import { site } from "$lib/site";
 
 	let { children } = $props();
 </script>
 
 <svelte:head>
-	<title>{APP_META_TITLE}</title>
+	<title>{site.title}</title>
 
 	<meta charset="utf-8" />
 	<meta name="robots" content="index,follow" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 
-	<meta name="title" content={APP_META_TITLE} />
-	<meta name="description" content={APP_META_DESCRIPTION} />
-	<meta name="author" content={APP_META_AUTHOR} />
-	<meta name="keywords" content={APP_META_KEYWORDS} />
-	<meta name="theme-color" content={APP_META_THEME_COLOR} />
+	<meta name="title" content={site.title} />
+	<meta name="description" content={site.description} />
+	<meta name="author" content={site.author} />
+	<meta name="keywords" content={site.keywords} />
+	<meta name="theme-color" content={site.themeColor} />
 
 	<link rel="canonical" href={APP_BASE_URL} />
 	<link rel="icon" type="image/svg+xml" href="{APP_BASE_URL}/favicon.svg" />
