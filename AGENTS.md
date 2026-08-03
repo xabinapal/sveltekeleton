@@ -168,12 +168,23 @@ children?.()}`; use optional chaining for optional snippets.
 
 - **Before any UI change, read [DESIGN.md](DESIGN.md).** It is the design
   contract and a mandatory check for UI work.
+- **DESIGN.md follows the official [design.md format spec](https://github.com/google-labs-code/design.md).**
+  It is YAML design tokens (front matter) plus markdown rationale — not free
+  text. Treat the tokens as the normative design values. Validate changes with
+  `npx @google/design.md lint DESIGN.md` (must pass with no errors).
 - **Always use daisyUI components.** Never use a raw element (`<button>`,
   `<div>` card, hand-rolled modal, etc.) when a daisyUI component exists.
   Tailwind utilities are for layout/spacing; daisyUI is for components and
-  theming.
+  theming. If no daisyUI component fits, compose the smallest possible wrapper
+  from daisyUI primitives as a Svelte component under `src/lib/components/` — not
+  from raw elements.
 - Use daisyUI semantic color tokens (`text-primary`, `bg-base-200`, …). Do not
-  hardcode hex colors. Keep theming working in all configured themes.
+  hardcode hex colors in markup; if a new value is needed, add it as a token in
+  `DESIGN.md` first.
+- Preserve accessibility: keep daisyUI's ARIA roles and keyboard behavior, and
+  keep theming working in all configured themes.
+- Theme/token changes happen in two places that must stay in sync: the daisyUI
+  theme in `src/app.css` and the tokens in `DESIGN.md`.
 
 ## Git workflow
 
