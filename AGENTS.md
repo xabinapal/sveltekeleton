@@ -205,7 +205,9 @@ children?.()}`; use optional chaining for optional snippets.
   one commit.
 - Don't commit during speculative exploration or while debugging blindly.
 - Include the required attribution trailers on every commit: `Signed-off-by:`
-  (from `-s`) and `Co-Authored-By: GLM-5.2 <noreply@z.ai>`.
+  (from `-s`) and a `Co-Authored-By:` trailer identifying the model used for
+  the change with its provider-associated email address (for example,
+  `Co-Authored-By: GPT-5.6-Luna <noreply@openai.com>` when using GPT-5.6-Luna).
 
 ## Maintenance
 
