@@ -8,7 +8,7 @@ SvelteKit + Cloudflare apps into a fast, common starting point.
 
 - **SvelteKit 2** + **Svelte 5** (runes)
 - **Vite 8** with the devtools-json plugin
-- **Tailwind CSS v4** (CSS-first, via the `@tailwindcss/vite` plugin)
+- **Tailwind CSS v4** (CSS-first, via the `@tailwindcss/vite` plugin) with **daisyUI** components
 - **Cloudflare Workers** deployment via `@sveltejs/adapter-cloudflare` + Wrangler
 - **Cloudflare D1** database accessed through the **Kysely** ORM with code-based migrations
 - **TypeScript 6** in strict mode with `svelte-check`
