@@ -69,6 +69,41 @@ All work flows through mise, which delegates to npm scripts:
 - **Stay focused.** Make the requested change. Don't refactor unrelated code in
   the same change. Check for existing utilities before creating new ones.
 
+## SvelteKit & Svelte 5 conventions
+
+- **Runes only.** Use `$state`, `$derived`, `$props()`, `$bindable()`, `$effect`.
+  Never Svelte 4 syntax: no `export let`, no `$:` reactive declarations, no
+  `on:click` directives, no `createEventDispatcher`, no `<slot>`.
+- **`$derived` for computed values; never `$effect`.** Don't use `$effect` to
+  assign a value that could be derived. Use `$effect` only for side effects, and
+  always return a cleanup function for subscriptions/listeners.
+- **Type props.** Components use an `interface Props` + `let { … }: Props =
+$props()`. Routes use the generated `PageProps` / `LayoutProps` from
+  `./$types` — never untyped `$props()` in a page or layout.
+- **Events are HTML attributes.** `onclick`, not `on:click`. There are no event
+  modifiers — call `event.preventDefault()` / `stopPropagation()` inside the
+  handler. Component-to-parent communication uses callback props, not
+  `createEventDispatcher`.
+- **Snippets, not slots.** `let { children } = $props()` and `{@render
+children?.()}`; use optional chaining for optional snippets.
+- **Data loading boundaries.** Secrets, the database, and private env belong in
+  `+page.server.ts` / `$lib/server` — never in universal `+page.js` (which also
+  runs in the browser). Use `+page.server.ts` loads for data and form actions
+  for mutations; don't fetch client-side for page data.
+- **Form actions.** Return `fail(400, { … })` for validation errors (keeps form
+  state), `throw error(status, …)` for unexpected errors, and
+  `throw redirect(status, …)` for auth/redirects. Return a structured result
+  (e.g. `{ success: true }`) from successful actions. Prefer `use:enhance` on
+  forms for progressive enhancement.
+- **SSR safety.** Never store per-user data in module-level `let` or global
+  `$state` — it leaks across requests on the server. Per-user data flows through
+  `event.locals` and is returned from `load`. (App-wide singletons like the
+  shared DB client are fine.)
+- **Performance.** Parallelize independent async work with `Promise.all`, and
+  stream non-critical data by returning un-awaited promises from `load`. Don't
+  reimplement in `$effect` what Svelte can do declaratively (`{#if}`, class
+  bindings).
+
 ## Logging
 
 - Use the structured logger from `$lib/server/logger` — it emits logfmt lines
@@ -98,6 +133,22 @@ All work flows through mise, which delegates to npm scripts:
   commit and aborts on failure. Never bypass it with `--no-verify`.
 - Do not consider work done until all gates pass. Type errors and lint failures
   are not acceptable.
+
+## Dependency policy
+
+- Ask before adding, removing, or upgrading dependencies.
+- Prefer the Node standard library and packages already in the repo over new
+  ones. Pin versions with caret ranges.
+- npm blocks install scripts by default; if a newly added native dependency
+  needs one, add it under `allowScripts` in `package.json`.
+
+## Escalation triggers (ask first)
+
+- Adding, removing, or upgrading dependencies.
+- Deploying to Cloudflare, or running any destructive command against the remote
+  D1. (`mise run reset` is local-only — never assume it is safe to run remotely.)
+- Changing the on-disk migration format, the wrangler bindings, or the public
+  task/CLI surface (`mise.toml`, npm scripts).
 
 ## Testing
 
@@ -142,8 +193,11 @@ All work flows through mise, which delegates to npm scripts:
 - Include the required attribution trailers on every commit: `Signed-off-by:`
   (from `-s`) and `Co-Authored-By: GLM-5.2 <noreply@z.ai>`.
 
-## Non-volatility
+## Maintenance
 
-This file stays stable. Do not add volatile details: no version pins, no exact
-dependency lists, no per-file inventories. Describe how to think and work here;
-put specifics in code, `README.md`, or `DESIGN.md`.
+- **`AGENTS.md` is non-volatile.** It holds principles and conventions, not
+  version pins, exact dependency lists, or file inventories. Update it only when
+  a convention itself changes — not for ordinary feature work.
+- **Keep stable docs accurate.** Update `README.md` when setup, commands, or
+  supported runtimes change. Update `DESIGN.md` when the UI rules change. Don't
+  let them drift from the code.
