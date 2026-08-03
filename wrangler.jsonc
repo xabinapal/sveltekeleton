@@ -4,6 +4,8 @@
 	"compatibility_flags": ["nodejs_compat"],
 	"observability": { "enabled": true },
 
+	"vars": {},
+
 	"main": ".svelte-kit/cloudflare/_worker.js",
 	"assets": {
 		"binding": "ASSETS",
@@ -13,7 +15,7 @@
 		{
 			"binding": "DB",
 			"database_name": "sveltekeleton",
-			"database_id": "94b78d5e-8a57-40db-aa0e-841694eb5552",
+			"database_id": "your-database-id-will-be-here",
 		},
 	],
 }
