@@ -1,0 +1,46 @@
+[settings]
+experimental = true
+
+[tools]
+node = "24.16.0"
+npm = "11.7.0"
+
+[hooks]
+enter = [
+    "mise run init",
+]
+
+[tasks.init]
+description = "install mise tools and npm dependencies"
+run = [
+    "mise install",
+    "npm install",
+]
+
+[tasks.dev]
+description = "start the vite dev server"
+run = "npm run dev"
+
+[tasks.build]
+description = "build the application for production"
+run = "npm run build"
+
+[tasks.preview]
+description = "preview the production build locally"
+run = "npm run preview"
+
+[tasks.deploy]
+description = "build and deploy to cloudflare workers"
+run = "npm run deploy"
+
+[tasks.lint]
+description = "run prettier checks and eslint"
+run = "npm run lint"
+
+[tasks.format]
+description = "format the codebase with prettier"
+run = "npm run format"
+
+[tasks.check]
+description = "run svelte-check type checking"
+run = "npm run check"
