@@ -69,6 +69,10 @@ run = "npm run test:component"
 description = "run isolated local integration tests"
 run = "npm run test:integration"
 
+[tasks.cache-reset]
+description = "delete local application cache entries from workers kv"
+run = "npm run cache:reset"
+
 [tasks.migrate]
 description = "run database migrations against the local d1 instance"
 run = "npm run db:migrate"

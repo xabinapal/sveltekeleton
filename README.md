@@ -80,6 +80,7 @@ defined in `package.json`.
 | `mise run test-unit`        | Run Node unit tests                     |
 | `mise run test-component`   | Run Svelte component tests              |
 | `mise run test-integration` | Run isolated local integration tests    |
+| `mise run cache-reset`      | Clear local Workers KV cache entries    |
 | `mise run migrate`          | Run D1 migrations against the local DB  |
 | `mise run preseed`          | Replace local D1 data with dummy data   |
 | `mise run reset`            | Wipe local D1 and re-apply from scratch |
@@ -166,12 +167,12 @@ that accommodates a measured password verification on the selected plan.
 - Node unit tests beside source modules as `*.test.ts`.
 - Svelte component tests as `*.component.test.ts` using Testing Library and
   jsdom.
-- Local D1 integration tests under `tests/integration/` using Wrangler with
-  persistence and remote bindings disabled.
+- Local D1 and KV integration tests under `tests/integration/` using Wrangler
+  with persistence and remote bindings disabled.
 
-The integration suite creates an ephemeral local D1 database and cannot access
-production resources. The pre-commit hook runs the complete suite together with
-formatting, linting, and type checks.
+The integration suite creates ephemeral local D1 and KV bindings and cannot
+access production resources. The pre-commit hook runs the complete suite
+together with formatting, linting, and type checks.
 
 ### Search engine visibility
 
@@ -317,6 +318,16 @@ so the placeholder namespace id in `wrangler.jsonc` is enough for development.
 The starter page demonstrates this with a five-minute cache entry: the first
 request reports a miss and later requests report a hit.
 
+Clear local cached values without changing other local KV domains with:
+
+```sh
+mise run cache-reset
+```
+
+This deletes every key under the application cache prefix (`app:cache:`) from
+the local Wrangler binding only. It preserves non-cache keys such as preferences
+and never enables remote bindings.
+
 ### Consistency and sessions
 
 Workers KV is optimized for read-heavy workloads and is eventually consistent.
@@ -407,6 +418,7 @@ src/
 scripts/
   migrate-db.ts        standalone migration runner (local d1 via platform proxy)
   preseed-db.ts        local-only user preseed runner
+  reset-cache.ts       local Workers KV cache reset runner
   reset-db.ts          local migration rollback and replay runner
 static/                favicon and robots.txt
 ```

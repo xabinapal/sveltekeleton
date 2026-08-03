@@ -48,6 +48,7 @@ All work flows through mise, which delegates to npm scripts:
 | `mise run test-unit`        | Run Node unit tests                        |
 | `mise run test-component`   | Run Svelte component tests                 |
 | `mise run test-integration` | Run isolated local integration tests       |
+| `mise run cache-reset`      | Clear local Workers KV cache entries       |
 | `mise run migrate`          | Apply D1 migrations (local)                |
 | `mise run preseed`          | Replace local D1 data with dummy data      |
 | `mise run reset`            | Wipe local D1 and re-apply migrations      |
@@ -63,7 +64,8 @@ All work flows through mise, which delegates to npm scripts:
 - `src/routes/` — SvelteKit routes and endpoints (`+page`, `+layout`, `+server`).
 - `src/lib/components/` — reusable Svelte components (built from daisyUI).
 - `static/` — static assets.
-- `scripts/` — local-only development scripts (migrate, preseed, reset-db).
+- `scripts/` — local-only development scripts (migrate, preseed, cache reset,
+  database reset).
 - `mise.toml`, `wrangler.jsonc`, `svelte.config.js`, `vite.config.ts`,
   `vitest.config.ts`, `tsconfig.json`, `eslint.config.js`.
 
@@ -248,7 +250,11 @@ breakpoints` with `F5`. It runs `mise run dev` in VS Code's debug terminal and
   the domain boundary before trusting security-sensitive fields.
 - Wrangler provides local, persistent KV under `.wrangler/` during development;
   never enable remote bindings by default.
-- In tests, mock both D1 and KV. Tests must not require Cloudflare resources.
+- `mise run cache-reset` deletes only `app:cache:` keys from local Wrangler KV;
+  it preserves other application KV domains. Keep this script under `scripts/`,
+  require `remoteBindings: false`, and never use it against remote storage.
+- Unit tests mock D1 and KV. Local integration tests may use ephemeral Wrangler
+  D1 and KV bindings only with persistence and remote bindings disabled.
 
 ## Verification gates (mandatory)
 
