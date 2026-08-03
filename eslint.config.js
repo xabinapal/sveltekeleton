@@ -36,6 +36,12 @@ export default tseslint.config(
 		},
 	},
 	{
+		files: ["src/lib/server/database/migrations/**/*.ts", "src/lib/server/database/d1-dialect.ts"],
+		rules: {
+			"@typescript-eslint/no-explicit-any": "off",
+		},
+	},
+	{
 		files: ["**/*.svelte"],
 		languageOptions: {
 			parserOptions: {

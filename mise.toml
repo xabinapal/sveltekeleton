@@ -44,3 +44,7 @@ run = "npm run format"
 [tasks.check]
 description = "run svelte-check type checking"
 run = "npm run check"
+
+[tasks.migrate]
+description = "run database migrations against the local d1 instance"
+run = "npm run db:migrate"
