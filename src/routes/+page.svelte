@@ -30,6 +30,20 @@
 
 	let { data }: PageProps = $props();
 	const { form, errors, enhance, message, submitting } = superForm(untrack(() => data.form));
+
+	type CacheResult = Awaited<typeof data.cache>;
+
+	function cacheDescription(cache: CacheResult) {
+		switch (cache.status) {
+			case "hit":
+			case "miss":
+				return `cached ${cache.generatedAt}`;
+			case "error":
+				return "cache request failed";
+			case "unavailable":
+				return "binding unavailable";
+		}
+	}
 </script>
 
 <section class="flex flex-col items-center justify-center gap-6 py-16 text-center">
@@ -47,23 +61,27 @@
 
 	<div class="stats stats-vertical bg-base-200 shadow-lg sm:stats-horizontal">
 		<div class="stat">
-			<div class="stat-title">D1 visits</div>
+			<div class="stat-title">D1 counter</div>
 			<div class="stat-value text-primary">{data.count}</div>
-			<div class="stat-desc">total page loads</div>
+			<div class="stat-desc">current value</div>
 		</div>
 		<div class="stat">
 			<div class="stat-title">KV cache</div>
-			<div class="stat-value text-primary uppercase">{data.cache.status}</div>
-			<div class="stat-desc">
-				{data.cache.generatedAt ? `cached ${data.cache.generatedAt}` : "binding unavailable"}
-			</div>
+			{#await data.cache}
+				<div class="stat-value text-primary">loading</div>
+				<div class="stat-desc">checking cache</div>
+			{:then cache}
+				<div class="stat-value text-primary uppercase">{cache.status}</div>
+				<div class="stat-desc">{cacheDescription(cache)}</div>
+			{/await}
 		</div>
 	</div>
 
 	<form method="POST" use:enhance class="flex flex-col items-center gap-4">
-		<fieldset class="fieldset">
-			<legend class="fieldset-legend">Increment by</legend>
+		<label class="fieldset" for="increment-amount">
+			<span class="fieldset-legend">Increment by</span>
 			<input
+				id="increment-amount"
 				type="number"
 				name="amount"
 				min="1"
@@ -77,7 +95,7 @@
 			{#if $errors.amount}
 				<p id="amount-errors" class="label text-error">{$errors.amount.join(", ")}</p>
 			{/if}
-		</fieldset>
+		</label>
 
 		<button class="btn btn-primary" disabled={$submitting}>
 			{$submitting ? "Incrementing…" : "Increment"}

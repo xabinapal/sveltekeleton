@@ -47,8 +47,10 @@ All work flows through mise, which delegates to npm scripts:
 ## Project layout (stable categories)
 
 - `src/lib/server/` — server-only code: `database/` (Kysely), `kv/` (Workers
-  KV), `logger`, `logfmt`, and domain logic. Never import from here into client
-  code.
+  KV), persistence adapters, application services, `logger`, and `logfmt`. Never
+  import from here into client code.
+- `src/lib/<domain>/` — framework-neutral shared schemas and domain types that
+  are safe to use from both server and client code.
 - `src/lib/site.ts` — static app identity (title, description, indexability).
 - `src/routes/` — SvelteKit routes and endpoints (`+page`, `+layout`, `+server`).
 - `src/lib/components/` — reusable Svelte components (built from daisyUI).
@@ -95,7 +97,8 @@ children?.()}`; use optional chaining for optional snippets.
   runs in the browser). Use `+page.server.ts` loads for data and form actions
   for mutations; don't fetch client-side for page data.
 - **Forms.** Use Superforms with Zod for form state and validation. Define each
-  schema at module scope, initialize it with `superValidate`, return
+  schema at module scope in its domain package, initialize it with
+  `superValidate`, return
   `fail(400, { form })` when invalid, and use Superforms' `message` helper for
   successful actions. On the client, use `superForm` and its `enhance` action;
   don't hand-roll form state or use SvelteKit's raw `enhance` action directly.
@@ -132,7 +135,8 @@ children?.()}`; use optional chaining for optional snippets.
 
 - D1 is the relational source of truth. Access it through `event.locals.db` and
   **Kysely** (`src/lib/server/database/`), never through raw D1 or raw SQL. It is
-  server-only.
+  server-only. Keep Kysely queries in repository modules rather than routes;
+  application services depend on narrow repository interfaces.
 - **Migrations are TypeScript** using Kysely's schema builder — never raw SQL
   files. Each migration lives in `migrations/NNNN_name.ts` and is registered in
   `migrations/index.ts`. Give every migration a `down` if you want it to support

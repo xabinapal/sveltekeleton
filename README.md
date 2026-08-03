@@ -261,6 +261,9 @@ src/
     migrator.ts        kysely migrator (transactions disabled for d1)
     migrations/        code-based migration files + index registry
   lib/server/kv/       namespaced JSON wrapper for Cloudflare KV
+  lib/server/cache/    read-through cache policies
+  lib/server/visits/   counter repository, service, and form action
+  lib/visits/          shared counter validation schema
   routes/
     +layout.svelte     layout with seo meta tags
     +page.server.ts    load + action reading and writing d1
