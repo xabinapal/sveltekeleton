@@ -201,7 +201,7 @@ src/
     +error.svelte      error page
     robots.txt/        dynamic robots.txt driven by site.indexable
 scripts/
-  migrate.ts           standalone migration runner (local d1 via platform proxy)
+  migrate-db.ts        standalone migration runner (local d1 via platform proxy)
 static/                favicon, web manifest, robots.txt
 ```
 
