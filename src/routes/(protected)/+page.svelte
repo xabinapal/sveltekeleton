@@ -1,7 +1,6 @@
 <script lang="ts">
 	import DataTable from "$lib/components/data-table.svelte";
 	import type { DataTableColumn, DataTableRow } from "$lib/components/data-table";
-	import VisitCounterForm from "$lib/components/visit-counter-form.svelte";
 	import { site } from "$lib/site";
 	import type { PageProps } from "./$types";
 
@@ -21,6 +20,7 @@
 			layer: "Application",
 		},
 		{ id: "database", capability: "Database", library: "Kysely + D1", layer: "Data" },
+		{ id: "authentication", capability: "Authentication", library: "PBKDF2 + JWT", layer: "Security" },
 		{ id: "key-value", capability: "Key-value storage", library: "Cloudflare KV", layer: "Data" },
 		{ id: "styles", capability: "Components", library: "daisyUI", layer: "Interface" },
 		{ id: "css", capability: "Styling", library: "Tailwind CSS", layer: "Interface" },
@@ -65,9 +65,9 @@
 
 	<div class="stats stats-vertical bg-base-200 shadow-lg sm:stats-horizontal">
 		<div class="stat">
-			<div class="stat-title">D1 counter</div>
-			<div class="stat-value text-primary">{data.count}</div>
-			<div class="stat-desc">current value</div>
+			<div class="stat-title">Authentication</div>
+			<div class="stat-value text-primary">{data.authEnabled ? "enabled" : "disabled"}</div>
+			<div class="stat-desc">{data.user ? `signed in as ${data.user.username}` : "public access"}</div>
 		</div>
 		<div class="stat">
 			<div class="stat-title">KV cache</div>
@@ -80,8 +80,6 @@
 			{/await}
 		</div>
 	</div>
-
-	<VisitCounterForm data={data.form} />
 
 	<div class="divider"></div>
 

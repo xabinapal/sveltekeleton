@@ -1,26 +1,42 @@
 import type { Kysely } from "kysely";
+import { hashPassword } from "../../src/lib/server/auth/password";
 import type { Database } from "../../src/lib/server/database/schema";
 
-const APPLICATION_TABLES_IN_DELETE_ORDER = ["visits"] as const satisfies readonly (keyof Database)[];
-const MIN_VISIT_COUNT = 25;
-const MAX_VISIT_COUNT = 250;
+const APPLICATION_TABLES_IN_DELETE_ORDER = ["users"] as const satisfies readonly (keyof Database)[];
+
+export const DEVELOPMENT_USERNAME = "developer";
+export const DEVELOPMENT_PASSWORD = "development-password";
 
 export interface PreseedResult {
-	visits: number;
-	visitCount: number;
+	users: number;
+	username: string;
+}
+
+export interface PreseedOptions {
+	createId?: () => string;
+	now?: () => Date;
+	salt?: Uint8Array<ArrayBuffer>;
 }
 
 export async function preseedDatabase(
 	db: Kysely<Database>,
-	random: () => number = Math.random,
+	{ createId = () => crypto.randomUUID(), now = () => new Date(), salt }: PreseedOptions = {},
 ): Promise<PreseedResult> {
 	for (const table of APPLICATION_TABLES_IN_DELETE_ORDER) {
 		await db.deleteFrom(table).execute();
 	}
 
-	const visitCount = Math.floor(random() * (MAX_VISIT_COUNT - MIN_VISIT_COUNT + 1)) + MIN_VISIT_COUNT;
+	const timestamp = now().toISOString();
+	await db
+		.insertInto("users")
+		.values({
+			id: createId(),
+			username: DEVELOPMENT_USERNAME,
+			password_hash: await hashPassword(DEVELOPMENT_PASSWORD, salt),
+			created_at: timestamp,
+			updated_at: timestamp,
+		})
+		.execute();
 
-	await db.insertInto("visits").values({ id: 1, count: visitCount }).execute();
-
-	return { visits: 1, visitCount };
+	return { users: 1, username: DEVELOPMENT_USERNAME };
 }

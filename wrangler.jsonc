@@ -4,7 +4,9 @@
 	"compatibility_flags": ["nodejs_compat"],
 	"observability": { "enabled": true },
 
-	"vars": {},
+	"vars": {
+		"AUTH_ENABLED": "false",
+	},
 
 	"main": ".svelte-kit/cloudflare/_worker.js",
 	"assets": {

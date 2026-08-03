@@ -4,19 +4,16 @@ import type { Migration } from "kysely/migration";
 export const initial: Migration = {
 	async up(db: Kysely<any>): Promise<void> {
 		await db.schema
-			.createTable("visits")
+			.createTable("users")
 			.ifNotExists()
-			.addColumn("id", "integer", (col) => col.primaryKey())
-			.addColumn("count", "integer", (col) => col.notNull().defaultTo(0))
-			.execute();
-
-		await db
-			.insertInto("visits")
-			.values({ id: 1, count: 0 })
-			.onConflict((conflict) => conflict.column("id").doNothing())
+			.addColumn("id", "text", (column) => column.primaryKey())
+			.addColumn("username", "text", (column) => column.notNull().unique())
+			.addColumn("password_hash", "text", (column) => column.notNull())
+			.addColumn("created_at", "text", (column) => column.notNull())
+			.addColumn("updated_at", "text", (column) => column.notNull())
 			.execute();
 	},
 	async down(db: Kysely<any>): Promise<void> {
-		await db.schema.dropTable("visits").ifExists().execute();
+		await db.schema.dropTable("users").ifExists().execute();
 	},
 };

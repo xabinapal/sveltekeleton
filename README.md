@@ -13,6 +13,7 @@ SvelteKit + Cloudflare apps into a fast, common starting point.
 - **Cloudflare Workers** deployment via `@sveltejs/adapter-cloudflare` + Wrangler
 - **Cloudflare D1** database accessed through the **Kysely** ORM with code-based migrations
 - **Cloudflare KV** for globally distributed caches, configuration, preferences, and session data
+- **Internal authentication** with PBKDF2 password hashes and signed JWT cookies
 - **TypeScript 6** in strict mode with `svelte-check`
 - **Prettier** + **ESLint 10** (flat config) for formatting and linting
 - **mise** for tool and task management (Node.js 26 + npm 12)
@@ -92,12 +93,71 @@ file and adjust:
 cp .env.example .env
 ```
 
-| Variable       | Purpose                                      |
-| -------------- | -------------------------------------------- |
-| `APP_BASE_URL` | Canonical base URL (local dev vs production) |
+| Variable       | Purpose                                                     |
+| -------------- | ----------------------------------------------------------- |
+| `APP_BASE_URL` | Canonical base URL (local dev vs production)                |
+| `AUTH_ENABLED` | Enables internal authentication when set to exactly `true`  |
+| `AUTH_SECRET`  | Server-only JWT signing secret containing at least 32 bytes |
 
 Static app identity — title, description, author, keywords, and theme color —
 lives in [`src/lib/site.ts`](src/lib/site.ts), not in env vars.
+
+`AUTH_SECRET` is intentionally not prefixed with `APP_` and must never be
+exposed to client code or committed with a production value. Authentication is
+disabled when `AUTH_ENABLED` is absent or `false`; an invalid value or an
+enabled configuration without a sufficiently long secret fails closed.
+
+## Authentication
+
+Authentication uses internal D1 users and username/password credentials. The
+database stores only PBKDF2-HMAC-SHA256 hashes with 600,000 iterations and a
+unique 16-byte salt. Login failures use the same response whether the username
+is missing or the password is wrong, and failed responses remove the submitted
+password before returning form state to the browser.
+
+Copying `.env.example` enables authentication locally. Development preseeding
+creates this local-only account on every server start:
+
+```text
+username: developer
+password: development-password
+```
+
+Never use that account or password in production. There is deliberately no
+registration, password reset, user administration, or authorization model in
+the skeleton; applications must add their own controlled user-provisioning
+workflow.
+
+### Protecting routes
+
+Route groups make protection explicit without changing public URLs:
+
+- Put browser pages under `src/routes/(protected)/`. Unauthenticated requests
+  redirect to `/login` and preserve a safe local return path.
+- Put server endpoints under `src/routes/(protected-api)/`. Unauthenticated
+  requests receive `401 Authentication required`; `/api/session` is the included
+  example.
+- Keep routes outside those groups when they must remain public. `/login`,
+  `/robots.txt`, and `/site.webmanifest` demonstrate public routes.
+
+When authentication is disabled, both protected groups are accessible and
+`locals.user` is `null`, so protected pages must tolerate the disabled mode.
+
+Successful login creates an eight-hour HS256 JWT in an `HttpOnly`,
+`SameSite=Lax` cookie. HTTPS requests also set `Secure`. Valid sessions are
+renewed after half their lifetime during navigation, providing sliding
+expiration. Logout is a POST operation that clears the cookie. JWT sessions are
+stateless, so changing or deleting a database user does not revoke an already
+issued token; rotate `AUTH_SECRET` to invalidate all sessions.
+
+For production, set `AUTH_ENABLED=true` as a Worker variable and provision
+`AUTH_SECRET` with Cloudflare Secrets using a cryptographically random value of
+at least 32 bytes. Development preseeding always targets local bindings and
+never creates production users.
+
+PBKDF2 is deliberately expensive. Production deployments should apply
+Cloudflare edge rate limiting to `POST /login` and configure a Worker CPU limit
+that accommodates a measured password verification on the selected plan.
 
 ## Testing
 
@@ -131,8 +191,14 @@ This single switch updates both the robots meta tag and the `robots.txt` route.
 ## Database (D1)
 
 The skeleton ships with Cloudflare D1 support through the Kysely ORM, including
-a migrations framework. Migrations are written in TypeScript using Kysely's
-schema builder — never raw SQL.
+a migrations framework and the internal `users` table. Migrations are written
+in TypeScript using Kysely's schema builder — never raw SQL.
+
+The current `0001_initial` is the skeleton baseline and was intentionally
+rewritten from the earlier disposable counter migration. Existing local
+checkouts from that earlier revision must run `mise run reset` once. After an
+application adopts this skeleton or deploys a migration, never rewrite that
+applied migration; add a new numbered migration instead.
 
 ### Local development
 
@@ -162,9 +228,10 @@ mise run preseed
 ```
 
 The preseed command applies pending migrations first, uses Kysely rather than
-raw SQL, and always disables remote bindings. Its implementation lives entirely
-under `scripts/`; application code does not import it, so production builds and
-deployments neither execute nor bundle development seed logic.
+raw SQL, and always disables remote bindings. It recreates the local development
+user documented above. Its implementation lives entirely under `scripts/`;
+application code does not import it, so production builds and deployments
+neither execute nor bundle development seed logic.
 
 To wipe the local database and re-apply every migration from scratch (handy
 during development):
@@ -315,9 +382,11 @@ src/
   app.html             html shell
   app.d.ts             app type declarations (Locals, Platform)
   app.css              tailwind import and daisyui plugin
-  hooks.server.ts      creates storage clients, runs migrations, emits access logs
+  hooks.server.ts      initializes storage, authentication, route guards, and access logs
+  lib/auth/            shared login schema and safe authenticated-user type
   lib/site.ts          site metadata, manifest settings, and indexability flag
-  lib/components/      reusable daisyUI components, including the data table
+  lib/components/      reusable daisyUI components, including login and data table UI
+  lib/server/auth/     password hashing, JWT sessions, users repository, and guards
   lib/server/logger.ts structured logfmt logger
   lib/server/database/ kysely orm layer
     schema.ts          table and database types
@@ -327,17 +396,18 @@ src/
     migrations/        code-based migration files + index registry
   lib/server/kv/       namespaced JSON wrapper for Cloudflare KV
   lib/server/cache/    read-through cache policies
-  lib/server/visits/   counter repository, service, and form action
-  lib/visits/          shared counter validation schema
   routes/
     +layout.svelte     layout with seo meta tags
-    +page.server.ts    load + action reading and writing d1
-    +page.svelte       landing page
+    (protected)/       authenticated browser pages; redirects to login
+    (protected-api)/   authenticated server endpoints; returns 401
+    (public)/login/    public username/password login page
     +error.svelte      error page
     robots.txt/        dynamic robots.txt driven by site.indexable
     site.webmanifest/  dynamic manifest driven by site metadata
 scripts/
   migrate-db.ts        standalone migration runner (local d1 via platform proxy)
+  preseed-db.ts        local-only user preseed runner
+  reset-db.ts          local migration rollback and replay runner
 static/                favicon and robots.txt
 ```
 

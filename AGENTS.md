@@ -21,6 +21,8 @@ predictability matter more than cleverness.
 - **Tailwind CSS v4 + daisyUI** for all UI (see [DESIGN.md](DESIGN.md)).
 - **Superforms + Zod** for schema-driven forms and validation.
 - **Svelte Headless Table** for data tables, filtering, sorting, and pagination.
+- **Internal authentication** with D1 users, PBKDF2 password hashes, and signed
+  JWT cookies; no identity provider or authorization layer.
 - **Vite** as the build/dev server.
 - **mise** manages tools (Node, npm) and runs every task.
 - **ESLint + Prettier** for lint/format, **svelte-check** for types, **Vitest +
@@ -136,6 +138,41 @@ children?.()}`; use optional chaining for optional snippets.
 - Access logs are handled centrally in `hooks.server.ts`; don't re-log requests
   in routes.
 - Keep log messages and keys stable and lowercase.
+- Never log passwords, password hashes, JWTs, cookies, or authentication
+  secrets. Use generic login-failure responses that do not reveal whether a
+  username exists.
+
+## Authentication
+
+- Authentication is optional and disabled unless `AUTH_ENABLED` is exactly
+  `true`. Enabled deployments require a server-only `AUTH_SECRET` of at least 32
+  bytes. Never expose the secret through an `APP_` variable or client module.
+- Every new route must deliberately choose its access boundary. Browser pages
+  requiring login belong under `src/routes/(protected)/`; the hook redirects
+  unauthenticated requests to `/login`. Protected `+server.ts` endpoints belong
+  under `src/routes/(protected-api)/`; the hook returns `401`. Routes outside
+  those groups are public.
+- Protection is enforced in `hooks.server.ts`, not only in layouts, components,
+  or hidden navigation. Use `event.locals.user` as the authenticated safe user
+  projection. Never trust a browser-provided user identifier.
+- Protected page layouts and endpoints must explicitly set `prerender = false`.
+  Static output bypasses server hooks and must never contain protected content.
+- Protected routes must still work when authentication is disabled, where
+  `event.locals.user` is `null`. Authentication establishes identity only; do
+  not add roles, permissions, or other authorization behavior unless requested.
+- Hash all stored passwords through `$lib/server/auth/password`; never store,
+  compare, log, or seed plaintext passwords in the database. Keep usernames in
+  canonical lowercase form and return generic invalid-credential errors.
+- Session cookies are `HttpOnly`, `SameSite=Lax`, `Secure` on HTTPS, and scoped
+  to `/`. JWT payloads contain only the user ID, username, issued time, and
+  expiration. Keep login return paths same-origin and make logout a POST action.
+- There are intentionally no registration, password-reset, user-admin, or
+  authorization screens. Production user provisioning is application-specific;
+  never run development preseed against remote bindings.
+- PBKDF2 verification is intentionally expensive. Production applications must
+  apply platform edge rate limiting to login attempts and select a Worker CPU
+  limit based on measured verification time; do not weaken the password work
+  factor to solve capacity issues.
 
 ## Debugging
 
@@ -165,6 +202,9 @@ breakpoints` with `F5`. It runs `mise run dev` in VS Code's debug terminal and
   files. Each migration lives in `migrations/NNNN_name.ts` and is registered in
   `migrations/index.ts`. Give every migration a `down` if you want it to support
   `mise run reset`.
+- Migration `0001_initial` is the reusable skeleton baseline. Once an
+  application has applied or deployed a migration, never rewrite it; introduce
+  a new numbered migration so existing databases can upgrade safely.
 - Migrations run automatically before the first request and on demand via
   `mise run migrate`. Initialization is single-flight per Worker isolate,
   migration failures fail the request and are retried on the next request.

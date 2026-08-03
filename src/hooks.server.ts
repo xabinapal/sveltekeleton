@@ -1,5 +1,9 @@
-import type { Handle } from "@sveltejs/kit";
+import { error, redirect, type Handle } from "@sveltejs/kit";
 import { building } from "$app/environment";
+import { env } from "$env/dynamic/private";
+import { readAuthConfig } from "$lib/server/auth/config";
+import { createLoginRedirect, protectedRouteKind } from "$lib/server/auth/guard";
+import { SESSION_COOKIE_NAME, resolveRequestSession, sessionCookieOptions } from "$lib/server/auth/request";
 import { createDatabase, runMigrations, type Database } from "$lib/server/database";
 import { createDatabaseInitializer } from "$lib/server/database/initializer";
 import { createKeyValueStore } from "$lib/server/kv";
@@ -34,10 +38,40 @@ export const handle: Handle = async ({ event, resolve }) => {
 	let status = 500;
 
 	try {
+		event.locals.auth = { enabled: false };
+		event.locals.user = null;
+
+		if (building && protectedRouteKind(event.route.id)) {
+			error(500, "Protected routes cannot be prerendered");
+		}
+
 		if (!building) {
-			event.locals.db = await initializeDatabase(event.platform?.env?.DB);
-			const namespace = event.platform?.env?.KV;
+			const environment = event.platform?.env;
+			event.locals.db = await initializeDatabase(environment?.DB);
+			const namespace = environment?.KV;
 			event.locals.kv = namespace ? createKeyValueStore(namespace, "app") : undefined;
+			event.locals.auth = readAuthConfig({
+				AUTH_ENABLED: env["AUTH_ENABLED"] ?? environment?.AUTH_ENABLED,
+				AUTH_SECRET: env["AUTH_SECRET"] ?? environment?.AUTH_SECRET,
+			});
+
+			const requestSession = await resolveRequestSession(event.locals.auth, event.cookies.get(SESSION_COOKIE_NAME));
+			event.locals.user = requestSession.user;
+
+			if (requestSession.clearCookie) event.cookies.delete(SESSION_COOKIE_NAME, { path: "/" });
+			if (requestSession.refreshedToken) {
+				event.cookies.set(
+					SESSION_COOKIE_NAME,
+					requestSession.refreshedToken,
+					sessionCookieOptions(event.url.protocol === "https:"),
+				);
+			}
+
+			if (event.locals.auth.enabled && !event.locals.user) {
+				const routeKind = protectedRouteKind(event.route.id);
+				if (routeKind === "page") redirect(303, createLoginRedirect(event.url));
+				if (routeKind === "api") error(401, "Authentication required");
+			}
 		}
 
 		const response = await resolve(event);

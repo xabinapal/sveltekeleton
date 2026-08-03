@@ -1,10 +1,11 @@
-import type { ColumnType } from "kysely";
-
-export interface VisitsTable {
-	id: ColumnType<number, number, never>;
-	count: ColumnType<number, number, number>;
+export interface UsersTable {
+	id: string;
+	username: string;
+	password_hash: string;
+	created_at: string;
+	updated_at: string;
 }
 
 export interface Database {
-	visits: VisitsTable;
+	users: UsersTable;
 }
