@@ -129,13 +129,18 @@ All work flows through mise, which delegates to npm scripts:
 - **Conventional commits** (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`,
   `chore:`, `build:`, …), lowercase, with a concise imperative subject and a
   bulletted body for anything non-trivial.
+- **Every commit must be GPG-signed and signed off.** Always commit with
+  `git commit -S -s` — `-S` produces a verified GPG signature and `-s` adds the
+  `Signed-off-by:` trailer. Never use `--no-verify`, `--no-gpg-sign`, or commit
+  without signing. (This is in addition to the pre-commit hook, which runs the
+  format/lint/check gates.)
 - **Commit often.** Each commit is one logical, reviewable unit. Don't wait until
   a feature is "completely finished" to start committing — commit as soon as a
   coherent change stands on its own. Equally, don't batch unrelated changes into
   one commit.
 - Don't commit during speculative exploration or while debugging blindly.
-- Include the required attribution trailers on every commit (e.g.
-  `Co-Authored-By: GLM-5.2 <noreply@z.ai>`).
+- Include the required attribution trailers on every commit: `Signed-off-by:`
+  (from `-s`) and `Co-Authored-By: GLM-5.2 <noreply@z.ai>`.
 
 ## Non-volatility
 
