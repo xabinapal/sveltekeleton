@@ -1,0 +1,109 @@
+# sveltekeleton
+
+An opinionated SvelteKit boilerplate for shipping applications to Cloudflare
+Workers. It distills the shared conventions from real, production-deployed
+SvelteKit + Cloudflare apps into a fast, common starting point.
+
+## Stack
+
+- **SvelteKit 2** + **Svelte 5** (runes)
+- **Vite 7** with the devtools-json plugin
+- **Tailwind CSS v4** (CSS-first, via PostCSS)
+- **Cloudflare Workers** deployment via `@sveltejs/adapter-cloudflare` + Wrangler
+- **TypeScript** in strict mode with `svelte-check`
+- **Prettier** + **ESLint** (flat config) for formatting and linting
+- **mise** for tool and task management
+
+## Prerequisites
+
+- [mise](https://mise.jdx.dev/) — pins Node.js and npm and runs all tasks.
+
+Node.js and npm versions are declared in `mise.toml`. mise installs them
+automatically on first use.
+
+## Getting started
+
+```sh
+mise run init   # install mise tools and npm dependencies
+mise run dev    # start the Vite dev server
+```
+
+The dev server runs on `http://localhost:5173`.
+
+## Tasks
+
+All tasks are run through mise, which delegates to the underlying npm scripts
+defined in `package.json`.
+
+| Task               | Description                             |
+| ------------------ | --------------------------------------- |
+| `mise run init`    | Install mise tools and npm dependencies |
+| `mise run dev`     | Start the Vite dev server               |
+| `mise run build`   | Build for production                    |
+| `mise run preview` | Preview the production build locally    |
+| `mise run deploy`  | Build and deploy to Cloudflare Workers  |
+| `mise run lint`    | Run Prettier checks and ESLint          |
+| `mise run format`  | Format the codebase with Prettier       |
+| `mise run check`   | Run `svelte-check` type checking        |
+
+## Environment variables
+
+Public configuration uses an `APP_`-prefixed env contract consumed through
+`$env/static/public`. Copy the example file and adjust the values:
+
+```sh
+cp .env.example .env
+```
+
+| Variable               | Purpose              |
+| ---------------------- | -------------------- |
+| `APP_BASE_URL`         | Canonical base URL   |
+| `APP_META_TITLE`       | Page and SEO title   |
+| `APP_META_DESCRIPTION` | SEO description      |
+| `APP_META_AUTHOR`      | Author metadata      |
+| `APP_META_KEYWORDS`    | SEO keywords         |
+| `APP_META_THEME_COLOR` | Theme color metadata |
+
+## Project structure
+
+```
+mise.toml              tool pins and task definitions
+svelte.config.js       adapter-cloudflare + APP_ env prefix
+vite.config.ts         sveltekit plugin and dev server
+wrangler.jsonc         cloudflare workers deployment config
+tsconfig.json          strict typescript configuration
+eslint.config.js       eslint flat config
+src/
+  app.html             html shell
+  app.d.ts             app type declarations (Locals, Platform)
+  app.css              tailwind import and theme tokens
+  hooks.server.ts      server-side request extension point
+  routes/
+    +layout.svelte     layout with seo meta tags
+    +page.svelte       landing page
+    +error.svelte      error page
+static/                favicon, web manifest, robots.txt
+```
+
+## Customizing for a new application
+
+1. Update `name` and `version` in `package.json` and `wrangler.jsonc`.
+2. Rename the `APP_` env prefix everywhere if a project-specific prefix is
+   preferred (`svelte.config.js`, `vite.config.ts`, `.env.example`, and
+   `$env/static/public` references in routes).
+3. Update the metadata values in `.env`.
+4. Replace `static/favicon.svg` and the manifest details.
+
+## Deployment
+
+Deployment targets Cloudflare Workers via Wrangler. Authenticate with
+`npx wrangler login` once, then:
+
+```sh
+mise run deploy
+```
+
+## License
+
+Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for
+details.
