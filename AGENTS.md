@@ -242,9 +242,9 @@ breakpoints` with `F5`. It runs `mise run dev` in VS Code's debug terminal and
   files. Each migration lives in `migrations/NNNN_name.ts` and is registered in
   `migrations/index.ts`. Give every migration a `down` if you want it to support
   `mise run db-reset`.
-- Migration `0001_initial` is the reusable skeleton baseline. Once an
-  application has applied or deployed a migration, never rewrite it; introduce
-  a new numbered migration so existing databases can upgrade safely.
+- Migration `0001_initial` is the current baseline migration. Do not rewrite it
+  or any later applied migration; introduce a new numbered migration so
+  existing databases can upgrade safely.
 - Migrations run automatically before the first request and on demand via
   `mise run db-migrate`. Initialization is single-flight per Worker isolate,
   migration failures fail the request and are retried on the next request.

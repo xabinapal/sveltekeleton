@@ -1,4 +1,10 @@
-## ADDED Requirements
+# key-value-storage Specification
+
+## Purpose
+
+Defines namespaced Workers KV access, domain key, validation, and consistency constraints, cache failure isolation, and local cache reset behavior.
+
+## Requirements
 
 ### Requirement: Namespaced JSON Storage
 
@@ -16,7 +22,7 @@ Application server code SHALL access Workers KV through a namespaced JSON store 
 
 ### Requirement: Versioned Keys, Expiration, and Validation
 
-KV keys MUST include a domain and schema version. A stored value whose shape changes MUST use a new key version rather than relying on migration of existing KV entries. Temporary values MUST have an explicit expiration. Retrieved JSON MUST be treated as untrusted and validated against its domain schema before use.
+Application domain keys MUST include a domain and schema version. A stored domain value whose shape changes MUST use a new key version rather than relying on migration of existing KV entries. Temporary domain values MUST have an explicit expiration. Domain consumers MUST read persisted JSON as untrusted data and validate it against the domain schema before use.
 
 #### Scenario: Stored shape changes
 

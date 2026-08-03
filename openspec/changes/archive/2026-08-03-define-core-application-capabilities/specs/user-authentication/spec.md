@@ -73,7 +73,7 @@ Usernames SHALL be trimmed and normalized to lowercase before lookup. Canonical 
 
 ### Requirement: Generic Login Failures
 
-Unknown usernames and incorrect passwords SHALL produce the same status `401` invalid-credential response. Unknown usernames MUST still trigger password derivation against a valid dummy hash. Failed responses MUST remove the submitted password from returned form state. Successful authentication SHALL expose only the user identifier and canonical username.
+Unknown usernames and incorrect passwords SHALL produce the same status `401` invalid-credential response. Unknown usernames MUST still trigger password derivation against a valid dummy hash. Failed responses MUST remove the submitted password from returned form state. Successful authentication SHALL expose only the user identifier and stored username.
 
 #### Scenario: Username is unknown
 
@@ -87,7 +87,7 @@ Unknown usernames and incorrect passwords SHALL produce the same status `401` in
 
 #### Scenario: Credentials are valid
 
-- **WHEN** the canonical username exists and the password verifies
+- **WHEN** the normalized username lookup finds a user and the password verifies
 - **THEN** authentication SHALL succeed with a user projection containing only identifier and username
 
 ### Requirement: Password Storage
@@ -111,7 +111,7 @@ Passwords SHALL be stored only as salted PBKDF2-HMAC-SHA-256 hashes using 600,00
 
 ### Requirement: Signed Session Cookie
 
-Successful login SHALL issue an HS256-signed JWT with an eight-hour lifetime. The payload MUST contain only the user identifier, canonical username, issued-at time, and expiration time. The token SHALL be stored in an `auth_session` cookie scoped to `/` with `HttpOnly`, `SameSite=Lax`, and an eight-hour maximum age. The cookie SHALL set `Secure` for HTTPS requests.
+Successful login SHALL issue an HS256-signed JWT with an eight-hour lifetime. The payload MUST contain only the user identifier, stored username, issued-at time, and expiration time. The token SHALL be stored in an `auth_session` cookie scoped to `/` with `HttpOnly`, `SameSite=Lax`, and an eight-hour maximum age. The cookie SHALL set `Secure` for HTTPS requests.
 
 #### Scenario: Session is issued
 
@@ -125,7 +125,7 @@ Successful login SHALL issue an HS256-signed JWT with an eight-hour lifetime. Th
 
 ### Requirement: Session Validation and Sliding Expiration
 
-A session SHALL be accepted only when its token structure, HS256 header, signature, payload shape, issued-at time, expiration, and exact eight-hour lifetime are valid. Invalid session cookies MUST be cleared and produce a null user. A valid session SHALL be refreshed once at least half its lifetime has elapsed, receiving a new issued-at time and eight-hour expiration.
+A session SHALL be accepted only when its token structure, HS256 header, signature, required payload fields, issued-at time, expiration, and exact eight-hour lifetime are valid. Invalid session cookies MUST be cleared and produce a null user. A valid session SHALL be refreshed once at least half its lifetime has elapsed, receiving a new issued-at time and eight-hour expiration.
 
 #### Scenario: Session token is invalid
 
@@ -193,11 +193,11 @@ Authentication SHALL establish identity only. It MUST NOT assign or evaluate rol
 - **WHEN** any user presents a valid session to a protected route
 - **THEN** the authentication guard SHALL admit the request without evaluating authorization attributes
 
-### Requirement: Production Login Protection
+### Requirement: Production Login Protection Guidance
 
-Production operation MUST apply edge rate limiting to login submissions and MUST allocate sufficient request CPU for the measured password-verification cost. Capacity controls MUST NOT weaken the password work factor.
+Production deployment guidance MUST require edge rate limiting for login submissions and a Worker CPU limit selected from measured password-verification cost. The guidance MUST NOT recommend weakening the password work factor to resolve capacity constraints.
 
-#### Scenario: Authentication is enabled in production
+#### Scenario: Production authentication is prepared
 
-- **WHEN** a production deployment accepts login submissions
-- **THEN** edge rate limiting SHALL constrain login attempts and the runtime CPU allocation SHALL accommodate password verification at the required work factor
+- **WHEN** an operator prepares a production deployment that accepts login submissions
+- **THEN** deployment guidance SHALL require edge rate limiting and sufficient request CPU for password verification at the required work factor

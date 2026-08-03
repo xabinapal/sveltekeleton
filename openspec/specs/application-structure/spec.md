@@ -1,4 +1,10 @@
-## ADDED Requirements
+# application-structure Specification
+
+## Purpose
+
+Defines application execution boundaries, request context, route access classification, application identity, crawler policy, and public/private configuration separation.
+
+## Requirements
 
 ### Requirement: Server and Client Boundaries
 
@@ -16,7 +22,7 @@ Private environment values, platform bindings, persistence clients, authenticati
 
 ### Requirement: Request-Scoped Application Context
 
-Before resolving a runtime route, the application SHALL establish request-local relational storage, optional key-value storage, authentication configuration, and authenticated user context. Request-specific identity and authentication state MUST NOT be stored in mutable process-global or module-level state.
+Before resolving a runtime route, the application SHALL establish a request-local reference to the initialized relational client, optional key-value storage, authentication configuration, and authenticated user context. Request-specific identity and authentication state MUST NOT be stored in mutable process-global or module-level state.
 
 #### Scenario: Runtime context is initialized
 
@@ -44,7 +50,7 @@ Page data that depends on private configuration, request identity, D1, or Worker
 
 ### Requirement: Explicit Route Access Classification
 
-Every route SHALL be deliberately classified as public, a protected browser page, or a protected server endpoint. Protected browser pages and protected server endpoints MUST remain dynamically rendered and MUST NOT depend on hidden navigation or client-side checks for protection.
+Route placement SHALL determine whether a route is a protected browser page, a protected server endpoint, or public. Routes in the protected browser and API groups MUST remain dynamically rendered and MUST NOT depend on hidden navigation or client-side checks for protection. Routes outside those groups SHALL be treated as public.
 
 #### Scenario: Protected browser page is defined
 
@@ -59,7 +65,7 @@ Every route SHALL be deliberately classified as public, a protected browser page
 #### Scenario: Route is outside protected groups
 
 - **WHEN** a route belongs to neither protected route group
-- **THEN** the request lifecycle SHALL classify it as public
+- **THEN** the request lifecycle SHALL treat it as public
 
 ### Requirement: Protected Content Cannot Be Prerendered
 
@@ -72,7 +78,7 @@ Protected content MUST NOT be emitted as static output. If build-time processing
 
 ### Requirement: Centralized Application Identity
 
-The application SHALL maintain one client-safe identity source for its title, description, author, keywords, theme color, web-manifest properties, and crawler indexability. Document metadata, visible application identity, and the web manifest SHALL derive applicable values from this source. Canonical, icon, and manifest links SHALL use the configured public application base URL.
+The application SHALL maintain one client-safe identity source for its title, description, author, keywords, theme color, manifest short name, manifest background color, manifest display mode, and crawler indexability. Document metadata, visible application identity, and those web-manifest properties SHALL derive from this source. The root layout's canonical, icon, and manifest links SHALL use the configured public application base URL.
 
 #### Scenario: Root metadata is rendered
 
@@ -82,7 +88,7 @@ The application SHALL maintain one client-safe identity source for its title, de
 #### Scenario: Web manifest is requested
 
 - **WHEN** a client requests `/site.webmanifest`
-- **THEN** the response SHALL derive its identity and display properties from the centralized application identity
+- **THEN** the response SHALL derive its name, short name, description, theme color, background color, and display mode from the centralized application identity
 
 ### Requirement: Unified Crawler Policy
 

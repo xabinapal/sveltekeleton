@@ -30,7 +30,7 @@ Schema changes MUST be expressed as ordered TypeScript migrations registered wit
 
 ### Requirement: Single-Flight Initialization
 
-Database initialization SHALL be single-flight within each runtime isolate. Concurrent requests awaiting initialization SHALL share one client creation and migration attempt, and subsequent requests SHALL reuse the initialized client. If initialization fails, the application MUST reject dependent requests, dispose of the failed client, clear failed state, and permit a later request to retry.
+Database initialization SHALL be single-flight within each runtime isolate. Concurrent requests awaiting initialization SHALL share one client creation and migration attempt, and subsequent requests SHALL reuse the initialized client. If migration fails after client creation, the application MUST reject dependent requests, dispose of the failed client, clear the failed migration state, and permit a later request to retry.
 
 #### Scenario: Concurrent requests initialize the database
 
@@ -67,7 +67,7 @@ Migration-oriented table and view discovery SHALL remain available. General sche
 
 ### Requirement: User Relation
 
-The relational schema SHALL define users with a text identifier, canonical username, password hash, creation timestamp, and update timestamp. The identifier MUST be the primary key. Username, password hash, and timestamps MUST be non-null, and username MUST be unique.
+The relational schema SHALL define users with a text identifier, username, password hash, creation timestamp, and update timestamp. The identifier MUST be the primary key. Username, password hash, and timestamps MUST be non-null, and username MUST be unique.
 
 #### Scenario: Valid user is stored
 

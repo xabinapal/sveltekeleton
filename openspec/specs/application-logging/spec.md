@@ -1,4 +1,10 @@
-## ADDED Requirements
+# application-logging Specification
+
+## Purpose
+
+Defines structured runtime and request logging, severity, filtering, safe context, and stable operational vocabulary.
+
+## Requirements
 
 ### Requirement: Structured Log Records
 
@@ -11,7 +17,7 @@ Every emitted runtime application log SHALL be a logfmt record beginning with `m
 
 ### Requirement: Log Value Encoding and Omission
 
-Values containing whitespace, an equals sign, or a double quote MUST be enclosed in double quotes. Backslashes and double quotes within quoted values MUST be escaped. Numbers and booleans SHALL remain unquoted. Structured values SHALL be JSON-serialized before logfmt quoting rules are applied. Context fields with an empty string, `null`, or `undefined` value SHALL be omitted.
+Values containing whitespace, an equals sign, or a double quote MUST be enclosed in double quotes. Backslashes and double quotes within quoted values MUST be escaped. Numbers and booleans SHALL remain unquoted. JSON-serializable objects and arrays SHALL be serialized before logfmt quoting rules are applied. Context fields with an empty string, `null`, or `undefined` value SHALL be omitted.
 
 #### Scenario: Values requiring quoting are encoded
 
@@ -65,9 +71,9 @@ The centralized request lifecycle SHALL emit one completion record for every res
 - **WHEN** a `GET` request to `/items?sort=name` completes with status `200`
 - **THEN** one completion record SHALL identify `GET /items`, path `/items`, status `200`, and elapsed integer milliseconds without the query string
 
-#### Scenario: Request fails without an HTTP status
+#### Scenario: Request fails without a numeric status
 
-- **WHEN** request processing throws an error without a recognized numeric HTTP status
+- **WHEN** request processing throws an error without a numeric `status` property
 - **THEN** the completion record SHALL use status `500`
 
 ### Requirement: Access Log Severity
@@ -91,12 +97,12 @@ Request completion records below status `400` SHALL use `info`, records from `40
 
 ### Requirement: Sensitive Data Exclusion
 
-Application logs MUST NOT contain plaintext passwords, password hashes, session tokens, JWTs, cookie values, authentication secrets, authorization headers, or equivalent credentials. Callers SHALL provide only context values that are safe for operational logging.
+Runtime logging call sites MUST NOT pass plaintext passwords, password hashes, session tokens, JWTs, cookie values, authentication secrets, authorization headers, or equivalent credentials to the logger. Callers SHALL provide only context values that are safe for operational logging.
 
-#### Scenario: Authentication failure is logged
+#### Scenario: Authentication request completes
 
-- **WHEN** application code records an authentication failure
-- **THEN** the resulting record MUST NOT contain submitted credentials, password hashes, session tokens, cookies, or signing secrets
+- **WHEN** request processing has access to submitted credentials, session cookies, or signing secrets
+- **THEN** its completion record MUST omit those values and contain only the defined safe request context
 
 ### Requirement: Stable Logging Vocabulary
 

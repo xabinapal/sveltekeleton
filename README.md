@@ -157,7 +157,7 @@ For production, set `AUTH_ENABLED=true` as a Worker variable and provision
 at least 32 bytes. Development preseeding always targets local bindings and
 never creates production users.
 
-PBKDF2 is deliberately expensive. Production deployments should apply
+PBKDF2 is deliberately expensive. Production deployments must apply
 Cloudflare edge rate limiting to `POST /login` and configure a Worker CPU limit
 that accommodates a measured password verification on the selected plan.
 
@@ -196,11 +196,10 @@ The skeleton ships with Cloudflare D1 support through the Kysely ORM, including
 a migrations framework and the internal `users` table. Migrations are written
 in TypeScript using Kysely's schema builder — never raw SQL.
 
-The current `0001_initial` is the skeleton baseline and was intentionally
-rewritten from the earlier disposable counter migration. Existing local
-checkouts from that earlier revision must run `mise run db-reset` once. After an
-application adopts this skeleton or deploys a migration, never rewrite that
-applied migration; add a new numbered migration instead.
+The current `0001_initial` replaced the earlier disposable counter migration.
+Existing local checkouts from that earlier revision must run `mise run db-reset`
+once. It is now the baseline migration: do not rewrite it or any later applied
+migration; add a new numbered migration instead.
 
 ### Local development
 
@@ -297,16 +296,17 @@ server modules share serialization and key conventions instead of calling the
 raw binding directly:
 
 ```ts
-interface Session {
-	userId: string;
-}
+import { z } from "zod";
 
-const session = await locals.kv?.get<Session>(`sessions:v1:${token}`);
+const sessionSchema = z.object({ userId: z.string() });
+const stored = await locals.kv?.get<unknown>(`sessions:v1:${token}`);
+const parsed = sessionSchema.safeParse(stored);
+const session = parsed.success ? parsed.data : null;
 await locals.kv?.put(`sessions:v1:${token}`, { userId }, { expirationTtl: 3600 });
 await locals.kv?.delete(`sessions:v1:${token}`);
 ```
 
-The wrapper adds the `app:` prefix. Callers should add a domain and version,
+The wrapper adds the `app:` prefix. Callers must add a domain and version,
 such as `sessions:v1:` or `cache:v1:`, and use expiration for temporary values.
 KV has no schema migrations; evolve key formats by introducing a new versioned
 prefix and deleting old keys when they are no longer needed.
@@ -359,7 +359,7 @@ the Vite dev terminal and in Cloudflare logs (`wrangler tail` / Workers
 observability).
 
 ```
-msg="GET /" level=info ts=2026-08-03T16:39:55Z method=GET path=/ status=200 duration_ms=15
+msg="GET /" level=info ts=2026-08-03T16:39:55.000Z method=GET path=/ status=200 duration_ms=15
 ```
 
 Access logging is built into `hooks.server.ts`: every request logs its method,
@@ -421,7 +421,7 @@ scripts/
   preseed-db.ts        local-only user preseed runner
   reset-cache.ts       local Workers KV cache reset runner
   reset-db.ts          local migration rollback and replay runner
-static/                favicon and robots.txt
+static/                favicon assets
 ```
 
 ## Customizing for a new application
