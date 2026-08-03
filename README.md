@@ -7,12 +7,12 @@ SvelteKit + Cloudflare apps into a fast, common starting point.
 ## Stack
 
 - **SvelteKit 2** + **Svelte 5** (runes)
-- **Vite 7** with the devtools-json plugin
-- **Tailwind CSS v4** (CSS-first, via PostCSS)
+- **Vite 8** with the devtools-json plugin
+- **Tailwind CSS v4** (CSS-first, via the `@tailwindcss/vite` plugin)
 - **Cloudflare Workers** deployment via `@sveltejs/adapter-cloudflare` + Wrangler
-- **TypeScript** in strict mode with `svelte-check`
-- **Prettier** + **ESLint** (flat config) for formatting and linting
-- **mise** for tool and task management
+- **TypeScript 6** in strict mode with `svelte-check`
+- **Prettier** + **ESLint 10** (flat config) for formatting and linting
+- **mise** for tool and task management (Node.js 26 + npm 12)
 
 ## Prerequisites
 
