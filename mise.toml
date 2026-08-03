@@ -2,8 +2,8 @@
 experimental = true
 
 [tools]
-node = "24.16.0"
-npm = "11.7.0"
+node = "26.5.1"
+npm = "12.0.2"
 
 [hooks]
 enter = [
