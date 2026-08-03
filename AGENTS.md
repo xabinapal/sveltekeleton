@@ -49,9 +49,9 @@ All work flows through mise, which delegates to npm scripts:
 | `mise run test-component`   | Run Svelte component tests                 |
 | `mise run test-integration` | Run isolated local integration tests       |
 | `mise run cache-reset`      | Clear local Workers KV cache entries       |
-| `mise run migrate`          | Apply D1 migrations (local)                |
-| `mise run preseed`          | Replace local D1 data with dummy data      |
-| `mise run reset`            | Wipe local D1 and re-apply migrations      |
+| `mise run db-migrate`       | Apply D1 migrations (local)                |
+| `mise run db-preseed`       | Replace local D1 data with dummy data      |
+| `mise run db-reset`         | Wipe local D1 and re-apply migrations      |
 
 ## Project layout (stable categories)
 
@@ -68,6 +68,13 @@ All work flows through mise, which delegates to npm scripts:
   database reset).
 - `mise.toml`, `wrangler.jsonc`, `svelte.config.js`, `vite.config.ts`,
   `vitest.config.ts`, `tsconfig.json`, `eslint.config.js`.
+
+## Task naming
+
+- Global lifecycle and quality tasks use unprefixed verbs (`dev`, `build`,
+  `lint`). Scoped task families use a lowercase noun prefix and hyphen
+  (`db-migrate`, `cache-reset`, `test-unit`, `debug-chrome`). Add new mise tasks
+  to the appropriate family rather than introducing ambiguous bare verbs.
 
 ## Working principles
 
@@ -203,17 +210,17 @@ breakpoints` with `F5`. It runs `mise run dev` in VS Code's debug terminal and
 - **Migrations are TypeScript** using Kysely's schema builder — never raw SQL
   files. Each migration lives in `migrations/NNNN_name.ts` and is registered in
   `migrations/index.ts`. Give every migration a `down` if you want it to support
-  `mise run reset`.
+  `mise run db-reset`.
 - Migration `0001_initial` is the reusable skeleton baseline. Once an
   application has applied or deployed a migration, never rewrite it; introduce
   a new numbered migration so existing databases can upgrade safely.
 - Migrations run automatically before the first request and on demand via
-  `mise run migrate`. Initialization is single-flight per Worker isolate,
+  `mise run db-migrate`. Initialization is single-flight per Worker isolate,
   migration failures fail the request and are retried on the next request.
 - `mise run dev` applies migrations and then preseed data before Vite starts.
   Preseeding is destructive: it clears every application table in dependency
   order and inserts representative, useful dummy records. Run the same behavior
-  manually with `mise run preseed`.
+  manually with `mise run db-preseed`.
 - Every database schema change must update `scripts/database/preseed.ts` in the
   same change. Add every new table to the complete deletion order and add seed
   records for new tables, required columns, and relationships without waiting
@@ -280,7 +287,7 @@ breakpoints` with `F5`. It runs `mise run dev` in VS Code's debug terminal and
 
 - Adding, removing, or upgrading dependencies.
 - Deploying to Cloudflare, changing remote D1/KV data, or running any destructive
-  command against remote storage. (`mise run reset` is local-only — never assume
+  command against remote storage. (`mise run db-reset` is local-only — never assume
   it is safe to run remotely.)
 - Changing the on-disk migration format, the wrangler bindings, or the public
   task/CLI surface (`mise.toml`, npm scripts).

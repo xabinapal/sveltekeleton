@@ -81,9 +81,9 @@ defined in `package.json`.
 | `mise run test-component`   | Run Svelte component tests              |
 | `mise run test-integration` | Run isolated local integration tests    |
 | `mise run cache-reset`      | Clear local Workers KV cache entries    |
-| `mise run migrate`          | Run D1 migrations against the local DB  |
-| `mise run preseed`          | Replace local D1 data with dummy data   |
-| `mise run reset`            | Wipe local D1 and re-apply from scratch |
+| `mise run db-migrate`       | Run D1 migrations against the local DB  |
+| `mise run db-preseed`       | Replace local D1 data with dummy data   |
+| `mise run db-reset`         | Wipe local D1 and re-apply from scratch |
 
 ## Environment variables
 
@@ -197,7 +197,7 @@ in TypeScript using Kysely's schema builder — never raw SQL.
 
 The current `0001_initial` is the skeleton baseline and was intentionally
 rewritten from the earlier disposable counter migration. Existing local
-checkouts from that earlier revision must run `mise run reset` once. After an
+checkouts from that earlier revision must run `mise run db-reset` once. After an
 application adopts this skeleton or deploys a migration, never rewrite that
 applied migration; add a new numbered migration instead.
 
@@ -219,13 +219,13 @@ To run migrations explicitly against the local database (without starting the
 dev server):
 
 ```sh
-mise run migrate
+mise run db-migrate
 ```
 
 To clear every application table and insert fresh development data manually:
 
 ```sh
-mise run preseed
+mise run db-preseed
 ```
 
 The preseed command applies pending migrations first, uses Kysely rather than
@@ -238,7 +238,7 @@ To wipe the local database and re-apply every migration from scratch (handy
 during development):
 
 ```sh
-mise run reset
+mise run db-reset
 ```
 
 This rolls all migrations back through their `down` methods and re-applies them,

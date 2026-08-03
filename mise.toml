@@ -73,14 +73,14 @@ run = "npm run test:integration"
 description = "delete local application cache entries from workers kv"
 run = "npm run cache:reset"
 
-[tasks.migrate]
+[tasks.db-migrate]
 description = "run database migrations against the local d1 instance"
 run = "npm run db:migrate"
 
-[tasks.preseed]
+[tasks.db-preseed]
 description = "wipe and preseed the local d1 database with development data"
 run = "npm run db:preseed"
 
-[tasks.reset]
+[tasks.db-reset]
 description = "wipe the local d1 database and re-apply migrations from scratch"
 run = "npm run db:reset"
