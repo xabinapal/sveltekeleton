@@ -134,6 +134,33 @@ npx wrangler d1 create sveltekeleton   # copy the printed database_id
 Replace the `database_id` placeholder in `wrangler.jsonc`, then `mise run deploy`.
 Migrations are applied automatically on the first request after each deploy.
 
+## Logging
+
+Structured logs are emitted in [logfmt](https://brandur.org/logfmt) — `key=value`
+pairs with the message first — and are written to the console, so they appear in
+the Vite dev terminal and in Cloudflare logs (`wrangler tail` / Workers
+observability).
+
+```
+msg="GET /" level=info ts=2026-08-03T16:39:55Z method=GET path=/ status=200 duration_ms=15
+```
+
+Access logging is built into `hooks.server.ts`: every request logs its method,
+path, status, and duration, with the level rising to `warn` (4xx) and `error`
+(5xx). Internal events (e.g. migrations) are logged the same way.
+
+Use the logger from any server module:
+
+```ts
+import { logger } from "$lib/server/logger";
+
+logger.info("user created", { id: 42 });
+logger.error("payment failed", { reason: "insufficient_funds" });
+```
+
+Levels are `debug`, `info`, `warn`, and `error`. `debug` is only shown in
+development; `info` and above are shown everywhere.
+
 ## Project structure
 
 ```
@@ -147,8 +174,9 @@ src/
   app.html             html shell
   app.d.ts             app type declarations (Locals, Platform)
   app.css              tailwind import and daisyui plugin
-  hooks.server.ts      creates the db client, runs migrations, exposes locals.db
+  hooks.server.ts      creates the db client, runs migrations, emits access logs
   lib/site.ts          static site metadata and indexability flag
+  lib/server/logger.ts structured logfmt logger
   lib/server/database/ kysely orm layer
     schema.ts          table and database types
     db.ts              d1-backed kysely client factory
