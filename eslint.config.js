@@ -45,6 +45,7 @@ export default tseslint.config(
 		files: ["**/*.svelte"],
 		languageOptions: {
 			parserOptions: {
+				parser: tseslint.parser,
 				project: "./tsconfig.json",
 				tsconfigRootDir: fileURLToPath(new URL(".", import.meta.url)),
 				extraFileExtensions: [".svelte"],

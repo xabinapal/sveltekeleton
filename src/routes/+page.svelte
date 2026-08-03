@@ -1,7 +1,9 @@
 <script lang="ts">
+	import { enhance } from "$app/forms";
 	import { site } from "$lib/site";
+	import type { PageProps } from "./$types";
 
-	let { data, form } = $props();
+	let { data, form }: PageProps = $props();
 </script>
 
 <section class="flex flex-col items-center justify-center gap-6 py-16 text-center">
@@ -20,11 +22,11 @@
 		<div class="stat">
 			<div class="stat-title">D1 visits</div>
 			<div class="stat-value text-primary">{data.count}</div>
-			<div class="stat-desc">{form ? "counter incremented" : "total page loads"}</div>
+			<div class="stat-desc">{form?.success ? "counter incremented" : "total page loads"}</div>
 		</div>
 	</div>
 
-	<form method="POST">
+	<form method="POST" use:enhance>
 		<button class="btn btn-primary">Increment</button>
 	</form>
 </section>

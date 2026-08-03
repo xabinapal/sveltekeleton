@@ -19,5 +19,6 @@ export const actions = {
 			.where("id", "=", 1)
 			.execute();
 		logger.debug("visit incremented");
+		return { success: true };
 	},
 } satisfies Actions;

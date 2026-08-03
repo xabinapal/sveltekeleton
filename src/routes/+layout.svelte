@@ -3,8 +3,9 @@
 
 	import { APP_BASE_URL } from "$env/static/public";
 	import { site } from "$lib/site";
+	import type { LayoutProps } from "./$types";
 
-	let { children } = $props();
+	let { children }: LayoutProps = $props();
 </script>
 
 <svelte:head>
