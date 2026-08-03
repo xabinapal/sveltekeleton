@@ -18,6 +18,7 @@ predictability matter more than cleverness.
 - **Cloudflare Workers + D1** via Wrangler; `@sveltejs/adapter-cloudflare`.
 - **Kysely** ORM with code-based migrations (no raw SQL).
 - **Tailwind CSS v4 + daisyUI** for all UI (see [DESIGN.md](DESIGN.md)).
+- **Superforms + Zod** for schema-driven forms and validation.
 - **Vite** as the build/dev server.
 - **mise** manages tools (Node, npm) and runs every task.
 - **ESLint + Prettier** for lint/format, **svelte-check** for types, **vitest**
@@ -90,11 +91,13 @@ children?.()}`; use optional chaining for optional snippets.
   `+page.server.ts` / `$lib/server` — never in universal `+page.js` (which also
   runs in the browser). Use `+page.server.ts` loads for data and form actions
   for mutations; don't fetch client-side for page data.
-- **Form actions.** Return `fail(400, { … })` for validation errors (keeps form
-  state), `throw error(status, …)` for unexpected errors, and
-  `throw redirect(status, …)` for auth/redirects. Return a structured result
-  (e.g. `{ success: true }`) from successful actions. Prefer `use:enhance` on
-  forms for progressive enhancement.
+- **Forms.** Use Superforms with Zod for form state and validation. Define each
+  schema at module scope, initialize it with `superValidate`, return
+  `fail(400, { form })` when invalid, and use Superforms' `message` helper for
+  successful actions. On the client, use `superForm` and its `enhance` action;
+  don't hand-roll form state or use SvelteKit's raw `enhance` action directly.
+  Use `throw error(status, …)` for unexpected errors and
+  `throw redirect(status, …)` for auth/redirects.
 - **SSR safety.** Never store per-user data in module-level `let` or global
   `$state` — it leaks across requests on the server. Per-user data flows through
   `event.locals` and is returned from `load`. (App-wide singletons like the
