@@ -10,6 +10,7 @@ SvelteKit + Cloudflare apps into a fast, common starting point.
 - **Vite 8** with the devtools-json plugin
 - **Tailwind CSS v4** (CSS-first, via the `@tailwindcss/vite` plugin)
 - **Cloudflare Workers** deployment via `@sveltejs/adapter-cloudflare` + Wrangler
+- **Cloudflare D1** database accessed through the **Kysely** ORM with code-based migrations
 - **TypeScript 6** in strict mode with `svelte-check`
 - **Prettier** + **ESLint 10** (flat config) for formatting and linting
 - **mise** for tool and task management (Node.js 26 + npm 12)
@@ -45,6 +46,7 @@ defined in `package.json`.
 | `mise run lint`    | Run Prettier checks and ESLint          |
 | `mise run format`  | Format the codebase with Prettier       |
 | `mise run check`   | Run `svelte-check` type checking        |
+| `mise run migrate` | Run D1 migrations against the local DB  |
 
 ## Environment variables
 
@@ -64,6 +66,61 @@ cp .env.example .env
 | `APP_META_KEYWORDS`    | SEO keywords         |
 | `APP_META_THEME_COLOR` | Theme color metadata |
 
+## Database
+
+The skeleton ships with Cloudflare D1 support through the Kysely ORM, including
+a migrations framework. Migrations are written in TypeScript using Kysely's
+schema builder — never raw SQL.
+
+### Local development
+
+In `vite dev`, the `adapter-cloudflare` platform proxy exposes the D1 binding
+(`event.platform.env.DB`) backed by a local SQLite database stored under
+`.wrangler/`. Migrations also run automatically on the first request after a
+server start, so the schema is always ready.
+
+To run migrations explicitly against the local database (without starting the
+dev server):
+
+```sh
+mise run migrate
+```
+
+### Writing migrations
+
+Add a new migration file in `src/lib/server/database/migrations/` using the
+`NNNN_name.ts` convention, then register it in `migrations/index.ts`:
+
+```ts
+import type { Kysely } from "kysely";
+import type { Migration } from "kysely/migration";
+
+export const example: Migration = {
+	async up(db: Kysely<any>): Promise<void> {
+		await db.schema
+			.createTable("example")
+			.ifNotExists()
+			.addColumn("id", "integer", (col) => col.primaryKey())
+			.execute();
+	},
+};
+```
+
+The Kysely schema builder keeps every schema change type-checked and SQL-free.
+Migrations are bundled into the Worker (no filesystem access at runtime), so
+they also run on cold starts in production.
+
+### Production
+
+Before deploying, create a real D1 database and set its id in `wrangler.jsonc`:
+
+```sh
+npx wrangler d1 create sveltekeleton   # copy the printed database_id
+```
+
+Replace the `database_id` placeholder in `wrangler.jsonc`, then `mise run deploy`.
+Migrations are applied automatically on the first request after each deploy.
+
 ## Project structure
 
 ```
@@ -77,11 +134,20 @@ src/
   app.html             html shell
   app.d.ts             app type declarations (Locals, Platform)
   app.css              tailwind import and theme tokens
-  hooks.server.ts      server-side request extension point
+  hooks.server.ts      creates the db client, runs migrations, exposes locals.db
+  lib/server/database/ kysely orm layer
+    schema.ts          table and database types
+    db.ts              d1-backed kysely client factory
+    d1-dialect.ts      d1-safe dialect and introspector
+    migrator.ts        kysely migrator (transactions disabled for d1)
+    migrations/        code-based migration files + index registry
   routes/
     +layout.svelte     layout with seo meta tags
+    +page.server.ts    load + action reading and writing d1
     +page.svelte       landing page
     +error.svelte      error page
+scripts/
+  migrate.ts           standalone migration runner (local d1 via platform proxy)
 static/                favicon, web manifest, robots.txt
 ```
 
