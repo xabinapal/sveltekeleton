@@ -26,10 +26,12 @@ export function createDatabaseInitializer<Binding, Client extends object>({
 				return nextClient;
 			} catch (error) {
 				await Promise.resolve(dispose(nextClient)).catch(() => undefined);
-				initialization = undefined;
 				throw error;
 			}
-		})();
+		})().catch((error) => {
+			initialization = undefined;
+			throw error;
+		});
 
 		return initialization;
 	};

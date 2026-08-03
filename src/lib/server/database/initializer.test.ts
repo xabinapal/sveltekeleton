@@ -53,6 +53,36 @@ describe("createDatabaseInitializer", () => {
 		await expect(Promise.all([first, second])).resolves.toEqual([client, client]);
 	});
 
+	it("shares a client creation failure and retries initialization", async () => {
+		const client = { id: "db-1" };
+		const createClient = vi
+			.fn()
+			.mockImplementationOnce(() => {
+				throw new Error("client creation failed");
+			})
+			.mockReturnValueOnce(client);
+		const migrate = vi.fn();
+		const dispose = vi.fn();
+		const initialize = createDatabaseInitializer({ createClient, migrate, dispose });
+
+		const first = initialize("binding");
+		const second = initialize("binding");
+		expect(first).toBe(second);
+		const failures = await Promise.allSettled([first, second]);
+		for (const failure of failures) {
+			expect(failure.status).toBe("rejected");
+			if (failure.status === "rejected") expect(failure.reason).toEqual(new Error("client creation failed"));
+		}
+
+		expect(createClient).toHaveBeenCalledOnce();
+		expect(migrate).not.toHaveBeenCalled();
+		expect(dispose).not.toHaveBeenCalled();
+		await expect(initialize("binding")).resolves.toBe(client);
+
+		expect(createClient).toHaveBeenCalledTimes(2);
+		expect(migrate).toHaveBeenCalledOnce();
+	});
+
 	it("disposes a failed client and retries initialization", async () => {
 		const firstClient = { id: "db-1" };
 		const secondClient = { id: "db-2" };
@@ -61,8 +91,16 @@ describe("createDatabaseInitializer", () => {
 		const dispose = vi.fn();
 		const initialize = createDatabaseInitializer({ createClient, migrate, dispose });
 
-		await expect(initialize("binding")).rejects.toThrow("migration failed");
+		const first = initialize("binding");
+		const second = initialize("binding");
+		expect(first).toBe(second);
+		const failures = await Promise.allSettled([first, second]);
+		for (const failure of failures) {
+			expect(failure.status).toBe("rejected");
+			if (failure.status === "rejected") expect(failure.reason).toEqual(new Error("migration failed"));
+		}
 		expect(dispose).toHaveBeenCalledWith(firstClient);
+		expect(dispose).toHaveBeenCalledOnce();
 		await expect(initialize("binding")).resolves.toBe(secondClient);
 
 		expect(createClient).toHaveBeenCalledTimes(2);

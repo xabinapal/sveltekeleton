@@ -18,7 +18,7 @@ declare global {
 				AUTH_ENABLED?: string;
 				AUTH_SECRET?: string;
 				DB: D1Database;
-				KV: KVNamespace;
+				KV?: KVNamespace;
 			};
 			context: {
 				waitUntil(promise: Promise<unknown>): void;
