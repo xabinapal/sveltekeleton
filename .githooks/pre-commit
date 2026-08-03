@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+# Pre-commit gate: format the codebase, re-stage, then verify with lint and check.
+# Aborts the commit if any step fails. Runs the same mise tasks used in development.
+set -e
+
+mise run format
+
+# Re-stage files that were staged before formatting so formatting changes are committed.
+git diff --cached --name-only --diff-filter=ACMR -z | xargs -0 git add
+
+mise run lint
+mise run check

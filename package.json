@@ -4,7 +4,7 @@
 	"license": "Apache-2.0",
 	"type": "module",
 	"scripts": {
-		"prepare": "svelte-kit sync",
+		"prepare": "svelte-kit sync && (git config core.hooksPath .githooks || true)",
 		"dev": "npm run prepare && vite dev --host",
 		"build": "npm run prepare && vite build",
 		"preview": "npm run build && vite preview --host",
