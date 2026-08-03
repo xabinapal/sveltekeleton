@@ -97,7 +97,7 @@ cp .env.example .env
 | Variable       | Purpose                                                     |
 | -------------- | ----------------------------------------------------------- |
 | `APP_BASE_URL` | Canonical base URL (local dev vs production)                |
-| `AUTH_ENABLED` | Enables internal authentication when set to exactly `true`  |
+| `AUTH_ENABLED` | Enables authentication when its normalized value is `true`  |
 | `AUTH_SECRET`  | Server-only JWT signing secret containing at least 32 bytes |
 
 Static app identity — title, description, author, keywords, and theme color —
@@ -105,8 +105,9 @@ lives in [`src/lib/site.ts`](src/lib/site.ts), not in env vars.
 
 `AUTH_SECRET` is intentionally not prefixed with `APP_` and must never be
 exposed to client code or committed with a production value. Authentication is
-disabled when `AUTH_ENABLED` is absent or `false`; an invalid value or an
-enabled configuration without a sufficiently long secret fails closed.
+disabled when `AUTH_ENABLED` is absent or normalizes to `false`; an invalid
+value or an enabled configuration without a sufficiently long secret fails
+closed.
 
 ## Authentication
 

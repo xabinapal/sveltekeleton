@@ -76,6 +76,35 @@ All work flows through mise, which delegates to npm scripts:
   (`db-migrate`, `cache-reset`, `test-unit`, `debug-chrome`). Add new mise tasks
   to the appropriate family rather than introducing ambiguous bare verbs.
 
+## OpenSpec workflow
+
+- OpenSpec is the requirements source of truth. Specifications under
+  `openspec/specs/` define current required behavior; active artifacts under
+  `openspec/changes/` define proposed additions, modifications, and removals.
+- Start every feature, bug fix, refactor, configuration change, schema change,
+  API change, and behavior-affecting documentation task by reviewing all
+  relevant canonical specs and active changes. Do this before designing or
+  editing code so existing requirements are not broken through incomplete
+  context.
+- Work OpenSpec-first rather than coding behavioral changes directly. Use
+  `/opsx-explore` to investigate ambiguity and cross-capability impact, then
+  `/opsx-propose` to define requirement changes and implementation tasks. Use
+  `/opsx-apply` only after the proposal is reviewable, `/opsx-verify` before
+  considering implementation complete, and `/opsx-archive` after verification.
+- When no relevant capability spec exists, add one through an OpenSpec proposal
+  before implementing the behavior. A proposal must identify every affected
+  capability, including indirect effects on security, persistence, logging,
+  route behavior, and operational workflows.
+- Never knowingly implement behavior that contradicts a canonical spec or an
+  accepted active change. Modify the requirements through a proposal first and
+  keep implementation, tests, documentation, and specs aligned.
+- Purely mechanical changes that cannot affect behavior may proceed without a
+  new proposal, but still require a spec and active-change review to confirm
+  they are non-behavioral.
+- Keep capability specifications durable and behavior-focused. Do not encode
+  temporary initialization, repository-copying, or placeholder-removal concerns
+  as product requirements.
+
 ## Working principles
 
 - **KISS / YAGNI.** Build the simplest thing that works. Don't add abstractions,
@@ -146,16 +175,18 @@ children?.()}`; use optional chaining for optional snippets.
   logger at the appropriate level (`debug`/`info`/`warn`/`error`).
 - Access logs are handled centrally in `hooks.server.ts`; don't re-log requests
   in routes.
-- Keep log messages and keys stable and lowercase.
+- Keep application-defined log messages and context keys stable and lowercase.
+  Access-log messages preserve the uppercase HTTP method.
 - Never log passwords, password hashes, JWTs, cookies, or authentication
   secrets. Use generic login-failure responses that do not reveal whether a
   username exists.
 
 ## Authentication
 
-- Authentication is optional and disabled unless `AUTH_ENABLED` is exactly
-  `true`. Enabled deployments require a server-only `AUTH_SECRET` of at least 32
-  bytes. Never expose the secret through an `APP_` variable or client module.
+- Authentication is optional and disabled unless `AUTH_ENABLED`, after trimming
+  and case normalization, is `true`. Enabled deployments require a server-only
+  `AUTH_SECRET` of at least 32 bytes. Never expose the secret through an `APP_`
+  variable or client module.
 - Every new route must deliberately choose its access boundary. Browser pages
   requiring login belong under `src/routes/(protected)/`; the hook redirects
   unauthenticated requests to `/login`. Protected `+server.ts` endpoints belong
