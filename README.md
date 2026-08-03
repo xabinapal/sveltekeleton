@@ -38,19 +38,22 @@ The dev server runs on `http://localhost:5173`.
 All tasks are run through mise, which delegates to the underlying npm scripts
 defined in `package.json`.
 
-| Task               | Description                             |
-| ------------------ | --------------------------------------- |
-| `mise run init`    | Install mise tools and npm dependencies |
-| `mise run dev`     | Start the Vite dev server               |
-| `mise run build`   | Build for production                    |
-| `mise run preview` | Preview the production build locally    |
-| `mise run deploy`  | Build and deploy to Cloudflare Workers  |
-| `mise run lint`    | Run Prettier checks and ESLint          |
-| `mise run format`  | Format the codebase with Prettier       |
-| `mise run check`   | Run `svelte-check` type checking        |
-| `mise run test`    | Run all test suites                     |
-| `mise run migrate` | Run D1 migrations against the local DB  |
-| `mise run reset`   | Wipe local D1 and re-apply from scratch |
+| Task                        | Description                             |
+| --------------------------- | --------------------------------------- |
+| `mise run init`             | Install mise tools and npm dependencies |
+| `mise run dev`              | Start the Vite dev server               |
+| `mise run build`            | Build for production                    |
+| `mise run preview`          | Preview the production build locally    |
+| `mise run deploy`           | Build and deploy to Cloudflare Workers  |
+| `mise run lint`             | Run Prettier checks and ESLint          |
+| `mise run format`           | Format the codebase with Prettier       |
+| `mise run check`            | Run `svelte-check` type checking        |
+| `mise run test`             | Run all test suites                     |
+| `mise run test-unit`        | Run Node unit tests                     |
+| `mise run test-component`   | Run Svelte component tests              |
+| `mise run test-integration` | Run isolated local integration tests    |
+| `mise run migrate`          | Run D1 migrations against the local DB  |
+| `mise run reset`            | Wipe local D1 and re-apply from scratch |
 
 ## Environment variables
 

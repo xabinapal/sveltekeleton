@@ -46,8 +46,20 @@ description = "run svelte-check type checking"
 run = "npm run check"
 
 [tasks.test]
-description = "run unit tests"
-run = "npm run test"
+description = "run all test suites"
+run = ["mise run test-unit", "mise run test-component", "mise run test-integration"]
+
+[tasks.test-unit]
+description = "run node unit tests"
+run = "npm run test:unit"
+
+[tasks.test-component]
+description = "run svelte component tests"
+run = "npm run test:component"
+
+[tasks.test-integration]
+description = "run isolated local integration tests"
+run = "npm run test:integration"
 
 [tasks.migrate]
 description = "run database migrations against the local d1 instance"

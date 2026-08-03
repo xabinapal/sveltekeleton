@@ -30,19 +30,22 @@ predictability matter more than cleverness.
 
 All work flows through mise, which delegates to npm scripts:
 
-| Task               | Purpose                               |
-| ------------------ | ------------------------------------- |
-| `mise run init`    | Install tools and dependencies        |
-| `mise run dev`     | Start the dev server                  |
-| `mise run build`   | Production build                      |
-| `mise run preview` | Preview the production build          |
-| `mise run deploy`  | Build and deploy to Cloudflare        |
-| `mise run format`  | Format with Prettier                  |
-| `mise run lint`    | Prettier check + ESLint               |
-| `mise run check`   | svelte-check type checking            |
-| `mise run test`    | Run all test suites                   |
-| `mise run migrate` | Apply D1 migrations (local)           |
-| `mise run reset`   | Wipe local D1 and re-apply migrations |
+| Task                        | Purpose                               |
+| --------------------------- | ------------------------------------- |
+| `mise run init`             | Install tools and dependencies        |
+| `mise run dev`              | Start the dev server                  |
+| `mise run build`            | Production build                      |
+| `mise run preview`          | Preview the production build          |
+| `mise run deploy`           | Build and deploy to Cloudflare        |
+| `mise run format`           | Format with Prettier                  |
+| `mise run lint`             | Prettier check + ESLint               |
+| `mise run check`            | svelte-check type checking            |
+| `mise run test`             | Run all test suites                   |
+| `mise run test-unit`        | Run Node unit tests                   |
+| `mise run test-component`   | Run Svelte component tests            |
+| `mise run test-integration` | Run isolated local integration tests  |
+| `mise run migrate`          | Apply D1 migrations (local)           |
+| `mise run reset`            | Wipe local D1 and re-apply migrations |
 
 ## Project layout (stable categories)
 
@@ -212,18 +215,26 @@ children?.()}`; use optional chaining for optional snippets.
 - Node unit tests sit beside modules as `*.test.ts`. They cover validation,
   services, state transitions, error handling, and storage orchestration with
   fakes or mocks; they never require Workers, D1, KV, or network access.
+- Unit tests are the default focus for application logic. Prefer them over
+  integration tests whenever a behavior can be tested through a narrow seam.
 - Svelte component tests use `*.component.test.ts`, Testing Library, and jsdom.
   Test accessible markup and application-owned event wiring, not Svelte,
   daisyUI, Superforms, or headless-table internals.
 - Local integration tests live under `tests/integration/`. They may use Wrangler
   bindings only with `persist: false` and `remoteBindings: false`; they must be
   deterministic, isolated, and incapable of touching Cloudflare resources.
+- Run integration tests only through `mise run test-integration`; do not invoke
+  the underlying npm or Vitest command directly. Add integration coverage only
+  when real framework, binding, migration, or adapter wiring is the behavior
+  under test; do not create broad integration coverage by default.
 - Do not duplicate dependency test suites. Test this application's schema
   policy and wrapper contracts, not Zod coercion mechanics, Kysely SQL text,
   Superforms serialization, or headless-table algorithms.
 - Keep I/O behind narrow interfaces and inject clocks, identifiers, and stores
   when their behavior matters. Routes and components remain thin adapters.
-- `mise run test` runs all three suites and is mandatory for application changes.
+- `mise run test` runs all three suites through their mise tasks and is mandatory
+  for application changes. Focused unit or component work may use
+  `mise run test-unit` or `mise run test-component` during iteration.
 
 ## UI work — read DESIGN.md first
 
