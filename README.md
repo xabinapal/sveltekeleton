@@ -47,6 +47,7 @@ defined in `package.json`.
 | `mise run format`  | Format the codebase with Prettier       |
 | `mise run check`   | Run `svelte-check` type checking        |
 | `mise run migrate` | Run D1 migrations against the local DB  |
+| `mise run reset`   | Wipe local D1 and re-apply from scratch |
 
 ## Environment variables
 
@@ -98,6 +99,16 @@ dev server):
 ```sh
 mise run migrate
 ```
+
+To wipe the local database and re-apply every migration from scratch (handy
+during development):
+
+```sh
+mise run reset
+```
+
+This rolls all migrations back through their `down` methods and re-applies them,
+so each migration needs a `down` for the reset to fully clear state.
 
 ### Writing migrations
 

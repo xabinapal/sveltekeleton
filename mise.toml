@@ -48,3 +48,7 @@ run = "npm run check"
 [tasks.migrate]
 description = "run database migrations against the local d1 instance"
 run = "npm run db:migrate"
+
+[tasks.reset]
+description = "wipe the local d1 database and re-apply migrations from scratch"
+run = "npm run db:reset"
