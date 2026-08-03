@@ -50,21 +50,34 @@ defined in `package.json`.
 
 ## Environment variables
 
-Public configuration uses an `APP_`-prefixed env contract consumed through
-`$env/static/public`. Copy the example file and adjust the values:
+Only values that change between environments live in env vars. Copy the example
+file and adjust:
 
 ```sh
 cp .env.example .env
 ```
 
-| Variable               | Purpose              |
-| ---------------------- | -------------------- |
-| `APP_BASE_URL`         | Canonical base URL   |
-| `APP_META_TITLE`       | Page and SEO title   |
-| `APP_META_DESCRIPTION` | SEO description      |
-| `APP_META_AUTHOR`      | Author metadata      |
-| `APP_META_KEYWORDS`    | SEO keywords         |
-| `APP_META_THEME_COLOR` | Theme color metadata |
+| Variable       | Purpose                                      |
+| -------------- | -------------------------------------------- |
+| `APP_BASE_URL` | Canonical base URL (local dev vs production) |
+
+Static app identity — title, description, author, keywords, and theme color —
+lives in [`src/lib/site.ts`](src/lib/site.ts), not in env vars.
+
+### Search engine visibility
+
+Apps are **private by default**: `site.indexable` is `false`, which emits
+`noindex,nofollow` and serves `Disallow: /` from `/robots.txt`. To make an app
+public, flip the flag in `src/lib/site.ts`:
+
+```ts
+export const site = {
+	// ...
+	indexable: true,
+} as const;
+```
+
+This single switch updates both the robots meta tag and the `robots.txt` route.
 
 ## Database
 
@@ -133,8 +146,9 @@ eslint.config.js       eslint flat config
 src/
   app.html             html shell
   app.d.ts             app type declarations (Locals, Platform)
-  app.css              tailwind import and theme tokens
+  app.css              tailwind import and daisyui plugin
   hooks.server.ts      creates the db client, runs migrations, exposes locals.db
+  lib/site.ts          static site metadata and indexability flag
   lib/server/database/ kysely orm layer
     schema.ts          table and database types
     db.ts              d1-backed kysely client factory
@@ -146,6 +160,7 @@ src/
     +page.server.ts    load + action reading and writing d1
     +page.svelte       landing page
     +error.svelte      error page
+    robots.txt/        dynamic robots.txt driven by site.indexable
 scripts/
   migrate.ts           standalone migration runner (local d1 via platform proxy)
 static/                favicon, web manifest, robots.txt
@@ -154,10 +169,11 @@ static/                favicon, web manifest, robots.txt
 ## Customizing for a new application
 
 1. Update `name` and `version` in `package.json` and `wrangler.jsonc`.
-2. Rename the `APP_` env prefix everywhere if a project-specific prefix is
+2. Edit `src/lib/site.ts` to set the app's title, description, author, and
+   whether it should be `indexable`.
+3. Rename the `APP_` env prefix everywhere if a project-specific prefix is
    preferred (`svelte.config.js`, `vite.config.ts`, `.env.example`, and
    `$env/static/public` references in routes).
-3. Update the metadata values in `.env`.
 4. Replace `static/favicon.svg` and the manifest details.
 
 ## Deployment

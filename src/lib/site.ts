@@ -4,4 +4,5 @@ export const site = {
 	author: "Your Name",
 	keywords: "sveltekit, cloudflare, daisyui, tailwind, boilerplate",
 	themeColor: "#f97316",
+	indexable: false,
 } as const;
