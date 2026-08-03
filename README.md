@@ -47,6 +47,7 @@ defined in `package.json`.
 | `mise run deploy`           | Build and deploy to Cloudflare Workers  |
 | `mise run lint`             | Run Prettier checks and ESLint          |
 | `mise run format`           | Format the codebase with Prettier       |
+| `mise run design-lint`      | Validate `DESIGN.md`                    |
 | `mise run check`            | Run `svelte-check` type checking        |
 | `mise run test`             | Run all test suites                     |
 | `mise run test-unit`        | Run Node unit tests                     |

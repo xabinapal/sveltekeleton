@@ -39,6 +39,7 @@ All work flows through mise, which delegates to npm scripts:
 | `mise run deploy`           | Build and deploy to Cloudflare        |
 | `mise run format`           | Format with Prettier                  |
 | `mise run lint`             | Prettier check + ESLint               |
+| `mise run design-lint`      | Validate `DESIGN.md`                  |
 | `mise run check`            | svelte-check type checking            |
 | `mise run test`             | Run all test suites                   |
 | `mise run test-unit`        | Run Node unit tests                   |
@@ -242,8 +243,9 @@ children?.()}`; use optional chaining for optional snippets.
   contract and a mandatory check for UI work.
 - **DESIGN.md follows the official [design.md format spec](https://github.com/google-labs-code/design.md).**
   It is YAML design tokens (front matter) plus markdown rationale — not free
-  text. Treat the tokens as the normative design values. Validate changes with
-  `npx @google/design.md lint DESIGN.md` (must pass with no errors).
+  text. Treat the tokens as the normative design values. When `DESIGN.md` is
+  changed, run `mise run design-lint` (must pass with no errors). The pre-commit
+  hook runs this task automatically when the file is staged.
 - **Always use daisyUI components.** Never use a raw element (`<button>`,
   `<div>` card, hand-rolled modal, etc.) when a daisyUI component exists.
   Tailwind utilities are for layout/spacing; daisyUI is for components and

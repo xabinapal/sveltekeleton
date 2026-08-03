@@ -37,6 +37,10 @@ run = "npm run deploy"
 description = "run prettier checks and eslint"
 run = "npm run lint"
 
+[tasks.design-lint]
+description = "validate the design contract"
+run = "npm run design:lint"
+
 [tasks.format]
 description = "format the codebase with prettier"
 run = "npm run format"

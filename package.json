@@ -11,6 +11,7 @@
 		"deploy": "npm run build && wrangler deploy",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
+		"design:lint": "npx @google/design.md lint DESIGN.md",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"test": "npm run test:unit && npm run test:component && npm run test:integration",
 		"test:unit": "vitest run",
