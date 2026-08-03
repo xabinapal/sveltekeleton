@@ -7,7 +7,8 @@ only when a convention itself changes — not for ordinary feature work.
 
 ## What this project is
 
-A SvelteKit skeleton deployed to Cloudflare Workers, backed by Cloudflare D1.
+A SvelteKit skeleton deployed to Cloudflare Workers, backed by Cloudflare D1
+and Workers KV.
 It exists as a common starting point for new applications, so consistency and
 predictability matter more than cleverness.
 
@@ -15,7 +16,7 @@ predictability matter more than cleverness.
 
 - **SvelteKit + Svelte 5** using runes (`$state`, `$props`, `$derived`, …).
 - **TypeScript** in strict mode.
-- **Cloudflare Workers + D1** via Wrangler; `@sveltejs/adapter-cloudflare`.
+- **Cloudflare Workers + D1 + KV** via Wrangler; `@sveltejs/adapter-cloudflare`.
 - **Kysely** ORM with code-based migrations (no raw SQL).
 - **Tailwind CSS v4 + daisyUI** for all UI (see [DESIGN.md](DESIGN.md)).
 - **Superforms + Zod** for schema-driven forms and validation.
@@ -45,8 +46,9 @@ All work flows through mise, which delegates to npm scripts:
 
 ## Project layout (stable categories)
 
-- `src/lib/server/` — server-only code: `database/` (Kysely), `logger`, `logfmt`,
-  and domain logic. Never import from here into client code.
+- `src/lib/server/` — server-only code: `database/` (Kysely), `kv/` (Workers
+  KV), `logger`, `logfmt`, and domain logic. Never import from here into client
+  code.
 - `src/lib/site.ts` — static app identity (title, description, indexability).
 - `src/routes/` — SvelteKit routes and endpoints (`+page`, `+layout`, `+server`).
 - `src/lib/components/` — reusable Svelte components (built from daisyUI).
@@ -88,7 +90,7 @@ $props()`. Routes use the generated `PageProps` / `LayoutProps` from
   `createEventDispatcher`.
 - **Snippets, not slots.** `let { children } = $props()` and `{@render
 children?.()}`; use optional chaining for optional snippets.
-- **Data loading boundaries.** Secrets, the database, and private env belong in
+- **Data loading boundaries.** Secrets, D1, KV, and private env belong in
   `+page.server.ts` / `$lib/server` — never in universal `+page.js` (which also
   runs in the browser). Use `+page.server.ts` loads for data and form actions
   for mutations; don't fetch client-side for page data.
@@ -124,16 +126,39 @@ children?.()}`; use optional chaining for optional snippets.
   in routes.
 - Keep log messages and keys stable and lowercase.
 
-## Database
+## Storage
 
-- All access goes through **Kysely** (`src/lib/server/database/`). It is
+### D1 and Kysely
+
+- D1 is the relational source of truth. Access it through `event.locals.db` and
+  **Kysely** (`src/lib/server/database/`), never through raw D1 or raw SQL. It is
   server-only.
 - **Migrations are TypeScript** using Kysely's schema builder — never raw SQL
   files. Each migration lives in `migrations/NNNN_name.ts` and is registered in
   `migrations/index.ts`. Give every migration a `down` if you want it to support
   `mise run reset`.
 - Migrations run automatically on startup and on demand via `mise run migrate`.
-- In tests, **mock the database** — never require a real D1.
+- Wrangler provides a local D1 database under `.wrangler/`; production requires
+  replacing the `database_id` placeholder in `wrangler.jsonc`.
+
+### Workers KV
+
+- Access KV through the namespaced JSON store at `event.locals.kv`, implemented
+  in `src/lib/server/kv/`; do not scatter direct `event.platform.env.KV` calls.
+- Use versioned domain keys such as `sessions:v1:<token>` or `cache:v1:<id>` and
+  expiration for temporary data. KV has no migrations; introduce a new key
+  version when stored shapes change.
+- KV is eventually consistent and read-optimized. Use it for caches,
+  configuration, preferences, allow-lists, and session records where delayed
+  invalidation is acceptable. Never use it for atomic counters, locks,
+  transactions, or immediate global session revocation.
+- Session keys must be high-entropy, live only in secure cookies, and have an
+  explicit expiration. Do not put secrets or KV values into client code unless
+  the route intentionally returns a safe projection. Validate stored JSON at
+  the domain boundary before trusting security-sensitive fields.
+- Wrangler provides local, persistent KV under `.wrangler/` during development;
+  never enable remote bindings by default.
+- In tests, mock both D1 and KV. Tests must not require Cloudflare resources.
 
 ## Verification gates (mandatory)
 
@@ -156,8 +181,9 @@ children?.()}`; use optional chaining for optional snippets.
 ## Escalation triggers (ask first)
 
 - Adding, removing, or upgrading dependencies.
-- Deploying to Cloudflare, or running any destructive command against the remote
-  D1. (`mise run reset` is local-only — never assume it is safe to run remotely.)
+- Deploying to Cloudflare, changing remote D1/KV data, or running any destructive
+  command against remote storage. (`mise run reset` is local-only — never assume
+  it is safe to run remotely.)
 - Changing the on-disk migration format, the wrangler bindings, or the public
   task/CLI surface (`mise.toml`, npm scripts).
 
@@ -165,8 +191,8 @@ children?.()}`; use optional chaining for optional snippets.
 
 - **Unit tests only** for now — no UI/DOM tests, no end-to-end tests, no
   integration tests that spin up infrastructure.
-- Tests must be **self-contained**: mock the database and any external resource.
-  A test run must never require D1, Workers, or network access.
+- Tests must be **self-contained**: mock storage and any external resource. A
+  test run must never require D1, KV, Workers, or network access.
 - **Test-first (TDD)** for new logic: write the test, watch it fail, implement,
   watch it pass. But **don't overtest** — write meaningful tests for real
   behavior, not a test per trivial getter or for every branch of every function.

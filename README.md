@@ -12,6 +12,7 @@ SvelteKit + Cloudflare apps into a fast, common starting point.
 - **Superforms + Zod** for schema-driven forms and **Svelte Headless Table** for data grids
 - **Cloudflare Workers** deployment via `@sveltejs/adapter-cloudflare` + Wrangler
 - **Cloudflare D1** database accessed through the **Kysely** ORM with code-based migrations
+- **Cloudflare KV** for globally distributed caches, configuration, preferences, and session data
 - **TypeScript 6** in strict mode with `svelte-check`
 - **Prettier** + **ESLint 10** (flat config) for formatting and linting
 - **mise** for tool and task management (Node.js 26 + npm 12)
@@ -81,7 +82,7 @@ export const site = {
 
 This single switch updates both the robots meta tag and the `robots.txt` route.
 
-## Database
+## Database (D1)
 
 The skeleton ships with Cloudflare D1 support through the Kysely ORM, including
 a migrations framework. Migrations are written in TypeScript using Kysely's
@@ -140,11 +141,63 @@ they also run on cold starts in production.
 Before deploying, create a real D1 database and set its id in `wrangler.jsonc`:
 
 ```sh
-npx wrangler d1 create sveltekeleton   # copy the printed database_id
+mise exec -- npx wrangler d1 create sveltekeleton   # copy the printed database_id
 ```
 
 Replace the `database_id` placeholder in `wrangler.jsonc`, then `mise run deploy`.
 Migrations are applied automatically on the first request after each deploy.
+
+## Key-value storage (KV)
+
+The `KV` binding is exposed by Wrangler as `event.platform.env.KV`. The server
+hook wraps it as a namespaced JSON store at `event.locals.kv`, so routes and
+server modules share serialization and key conventions instead of calling the
+raw binding directly:
+
+```ts
+interface Session {
+	userId: string;
+}
+
+const session = await locals.kv?.get<Session>(`sessions:v1:${token}`);
+await locals.kv?.put(`sessions:v1:${token}`, { userId }, { expirationTtl: 3600 });
+await locals.kv?.delete(`sessions:v1:${token}`);
+```
+
+The wrapper adds the `app:` prefix. Callers should add a domain and version,
+such as `sessions:v1:` or `cache:v1:`, and use expiration for temporary values.
+KV has no schema migrations; evolve key formats by introducing a new versioned
+prefix and deleting old keys when they are no longer needed.
+
+### Local development
+
+The adapter-cloudflare platform proxy provides a local KV implementation during
+`mise run dev`. Values persist under `.wrangler/` and never touch production KV,
+so the placeholder namespace id in `wrangler.jsonc` is enough for development.
+The starter page demonstrates this with a five-minute cache entry: the first
+request reports a miss and later requests report a hit.
+
+### Consistency and sessions
+
+Workers KV is optimized for read-heavy workloads and is eventually consistent.
+Writes, updates, and deletes may take 60 seconds or more to become visible in
+other locations. It is appropriate for caches, configuration, preferences,
+allow-lists, and expiring session records when delayed invalidation is
+acceptable. Do not use KV for counters, locks, transactions, write-heavy data,
+or security flows that require immediate global revocation; use D1 or another
+coordination mechanism instead. Session identifiers must be high-entropy,
+stored only in secure cookies, and paired with explicit KV expiration.
+
+### Production
+
+Create the production namespace before deployment:
+
+```sh
+mise exec -- npx wrangler kv namespace create KV   # copy the printed id
+```
+
+Replace the KV `id` placeholder in `wrangler.jsonc`. Deployment requires both
+the real D1 database id and KV namespace id.
 
 ## Logging
 
@@ -186,7 +239,7 @@ src/
   app.html             html shell
   app.d.ts             app type declarations (Locals, Platform)
   app.css              tailwind import and daisyui plugin
-  hooks.server.ts      creates the db client, runs migrations, emits access logs
+  hooks.server.ts      creates storage clients, runs migrations, emits access logs
   lib/site.ts          site metadata, manifest settings, and indexability flag
   lib/components/      reusable daisyUI components, including the data table
   lib/server/logger.ts structured logfmt logger
@@ -196,6 +249,7 @@ src/
     d1-dialect.ts      d1-safe dialect and introspector
     migrator.ts        kysely migrator (transactions disabled for d1)
     migrations/        code-based migration files + index registry
+  lib/server/kv/       namespaced JSON wrapper for Cloudflare KV
   routes/
     +layout.svelte     layout with seo meta tags
     +page.server.ts    load + action reading and writing d1

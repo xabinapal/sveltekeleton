@@ -16,6 +16,7 @@
 			layer: "Application",
 		},
 		{ id: "database", capability: "Database", library: "Kysely + D1", layer: "Data" },
+		{ id: "key-value", capability: "Key-value storage", library: "Cloudflare KV", layer: "Data" },
 		{ id: "styles", capability: "Components", library: "daisyUI", layer: "Interface" },
 		{ id: "css", capability: "Styling", library: "Tailwind CSS", layer: "Interface" },
 		{ id: "runtime", capability: "Runtime", library: "Cloudflare Workers", layer: "Platform" },
@@ -41,13 +42,21 @@
 		<span class="badge badge-outline badge-primary">Tailwind CSS</span>
 		<span class="badge badge-outline badge-primary">daisyUI</span>
 		<span class="badge badge-outline badge-primary">Cloudflare D1</span>
+		<span class="badge badge-outline badge-primary">Cloudflare KV</span>
 	</div>
 
-	<div class="stats bg-base-200 shadow-lg">
+	<div class="stats stats-vertical bg-base-200 shadow-lg sm:stats-horizontal">
 		<div class="stat">
 			<div class="stat-title">D1 visits</div>
 			<div class="stat-value text-primary">{data.count}</div>
 			<div class="stat-desc">total page loads</div>
+		</div>
+		<div class="stat">
+			<div class="stat-title">KV cache</div>
+			<div class="stat-value text-primary uppercase">{data.cache.status}</div>
+			<div class="stat-desc">
+				{data.cache.generatedAt ? `cached ${data.cache.generatedAt}` : "binding unavailable"}
+			</div>
 		</div>
 	</div>
 

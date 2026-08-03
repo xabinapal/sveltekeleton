@@ -1,6 +1,7 @@
 import type { Handle } from "@sveltejs/kit";
 import { building } from "$app/environment";
 import { createDatabase, runMigrations, type Database } from "$lib/server/database";
+import { createKeyValueStore } from "$lib/server/kv";
 import { logger, type LogLevel } from "$lib/server/logger";
 import type { Kysely } from "kysely";
 
@@ -37,6 +38,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 
 	event.locals.db = db;
+	const namespace = event.platform?.env?.KV;
+	event.locals.kv = namespace ? createKeyValueStore(namespace, "app") : undefined;
 
 	const start = performance.now();
 	const response = await resolve(event);

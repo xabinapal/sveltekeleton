@@ -18,4 +18,10 @@
 			"database_id": "your-database-id-will-be-here",
 		},
 	],
+	"kv_namespaces": [
+		{
+			"binding": "KV",
+			"id": "your-kv-namespace-id-will-be-here",
+		},
+	],
 }

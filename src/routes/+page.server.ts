@@ -3,6 +3,7 @@ import { sql } from "kysely";
 import { message, superValidate } from "sveltekit-superforms";
 import { zod4 } from "sveltekit-superforms/adapters";
 import { z } from "zod";
+import type { KeyValueStore } from "$lib/server/kv";
 import { logger } from "$lib/server/logger";
 import type { Actions, PageServerLoad } from "./$types";
 
@@ -11,12 +12,40 @@ const incrementSchema = z.object({
 	amount: z.coerce.number().int().min(1).max(100).default(1),
 });
 
+const CACHE_KEY = "cache:v1:starter-capabilities";
+const CACHE_TTL_SECONDS = 300;
+
+interface CachedCapabilities {
+	generatedAt: string;
+}
+
+async function loadCapabilitiesCache(kv: KeyValueStore | undefined) {
+	if (!kv) return { status: "unavailable" as const, generatedAt: null };
+
+	try {
+		const cached = await kv.get<CachedCapabilities>(CACHE_KEY);
+		if (cached) return { status: "hit" as const, generatedAt: cached.generatedAt };
+
+		const value = { generatedAt: new Date().toISOString() };
+		await kv.put(CACHE_KEY, value, { expirationTtl: CACHE_TTL_SECONDS });
+		return { status: "miss" as const, generatedAt: value.generatedAt };
+	} catch (error) {
+		logger.warn("kv cache unavailable", {
+			error: error instanceof Error ? error.message : String(error),
+		});
+		return { status: "error" as const, generatedAt: null };
+	}
+}
+
 export const load: PageServerLoad = async ({ locals }) => {
-	const row = await locals.db?.selectFrom("visits").select("count").where("id", "=", 1).executeTakeFirst();
+	const [row, form, cache] = await Promise.all([
+		locals.db?.selectFrom("visits").select("count").where("id", "=", 1).executeTakeFirst(),
+		superValidate(zod4(incrementSchema)),
+		loadCapabilitiesCache(locals.kv),
+	]);
 	const count = row?.count ?? 0;
-	const form = await superValidate(zod4(incrementSchema));
-	logger.debug("visits loaded", { count });
-	return { count, form };
+	logger.debug("page data loaded", { count, cache: cache.status });
+	return { count, form, cache };
 };
 
 export const actions: Actions = {
