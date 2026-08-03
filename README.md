@@ -33,6 +33,31 @@ mise run dev    # start the Vite dev server
 
 The dev server runs on `http://localhost:5173`.
 
+## Debugging
+
+Breakpoint configurations are committed in [`.vscode/launch.json`](.vscode/launch.json).
+
+### Visual Studio Code
+
+Open **Run and Debug**, select `SvelteKit: VS Code breakpoints`, and press `F5`.
+VS Code starts `mise run dev` in its JavaScript debug terminal, allowing
+breakpoints in both client and server SvelteKit source.
+
+### Google Chrome
+
+In VS Code, select `SvelteKit: Chrome breakpoints` to start the
+inspected development server and a separate Chrome debug profile. Set client
+breakpoints in VS Code or Chrome DevTools source maps.
+
+Outside VS Code, run:
+
+```sh
+mise run debug-chrome
+```
+
+Then open `chrome://inspect` in Chrome and select the dedicated Node DevTools
+target. Open `http://localhost:5173` in Chrome to debug client source maps.
+
 ## Tasks
 
 All tasks are run through mise, which delegates to the underlying npm scripts

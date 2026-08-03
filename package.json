@@ -6,6 +6,7 @@
 	"scripts": {
 		"prepare": "svelte-kit sync && (git config core.hooksPath .githooks || true)",
 		"dev": "npm run prepare && vite dev --host",
+		"dev:debug-chrome": "NODE_OPTIONS=--inspect npm run dev",
 		"build": "npm run prepare && vite build",
 		"preview": "npm run build && vite preview --host",
 		"deploy": "npm run build && wrangler deploy",

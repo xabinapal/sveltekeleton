@@ -21,6 +21,10 @@ run = [
 description = "start the vite dev server"
 run = "npm run dev"
 
+[tasks.debug-chrome]
+description = "start the dev server with the Node inspector for Chrome"
+run = "npm run dev:debug-chrome"
+
 [tasks.build]
 description = "build the application for production"
 run = "npm run build"

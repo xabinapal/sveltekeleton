@@ -30,23 +30,24 @@ predictability matter more than cleverness.
 
 All work flows through mise, which delegates to npm scripts:
 
-| Task                        | Purpose                               |
-| --------------------------- | ------------------------------------- |
-| `mise run init`             | Install tools and dependencies        |
-| `mise run dev`              | Start the dev server                  |
-| `mise run build`            | Production build                      |
-| `mise run preview`          | Preview the production build          |
-| `mise run deploy`           | Build and deploy to Cloudflare        |
-| `mise run format`           | Format with Prettier                  |
-| `mise run lint`             | Prettier check + ESLint               |
-| `mise run design-lint`      | Validate `DESIGN.md`                  |
-| `mise run check`            | svelte-check type checking            |
-| `mise run test`             | Run all test suites                   |
-| `mise run test-unit`        | Run Node unit tests                   |
-| `mise run test-component`   | Run Svelte component tests            |
-| `mise run test-integration` | Run isolated local integration tests  |
-| `mise run migrate`          | Apply D1 migrations (local)           |
-| `mise run reset`            | Wipe local D1 and re-apply migrations |
+| Task                        | Purpose                                    |
+| --------------------------- | ------------------------------------------ |
+| `mise run init`             | Install tools and dependencies             |
+| `mise run dev`              | Start the dev server                       |
+| `mise run debug-chrome`     | Start the dev server with Chrome inspector |
+| `mise run build`            | Production build                           |
+| `mise run preview`          | Preview the production build               |
+| `mise run deploy`           | Build and deploy to Cloudflare             |
+| `mise run format`           | Format with Prettier                       |
+| `mise run lint`             | Prettier check + ESLint                    |
+| `mise run design-lint`      | Validate `DESIGN.md`                       |
+| `mise run check`            | svelte-check type checking                 |
+| `mise run test`             | Run all test suites                        |
+| `mise run test-unit`        | Run Node unit tests                        |
+| `mise run test-component`   | Run Svelte component tests                 |
+| `mise run test-integration` | Run isolated local integration tests       |
+| `mise run migrate`          | Apply D1 migrations (local)                |
+| `mise run reset`            | Wipe local D1 and re-apply migrations      |
 
 ## Project layout (stable categories)
 
@@ -134,6 +135,22 @@ children?.()}`; use optional chaining for optional snippets.
 - Access logs are handled centrally in `hooks.server.ts`; don't re-log requests
   in routes.
 - Keep log messages and keys stable and lowercase.
+
+## Debugging
+
+- Keep [`.vscode/launch.json`](.vscode/launch.json) source-controlled and
+  functional. It is the required breakpoint configuration for both VS Code and
+  Google Chrome.
+- For VS Code breakpoints, use **Run and Debug** and launch `SvelteKit: VS Code
+breakpoints` with `F5`. It runs `mise run dev` in VS Code's debug terminal and
+  supports client and server source breakpoints.
+- For Google Chrome, launch `SvelteKit: Chrome breakpoints`. It
+  starts `mise run debug-chrome` with Node inspection and a dedicated Chrome
+  debug profile. Alternatively, run `mise run debug-chrome`, open
+  `chrome://inspect`, and select the dedicated Node DevTools target.
+- Use breakpoint debugging for runtime issues before adding diagnostic logging.
+  Never commit temporary breakpoints, `debugger` statements, or generated Chrome
+  profiles. `.vscode/chrome-debug-profile/` is local-only.
 
 ## Storage
 

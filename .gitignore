@@ -17,3 +17,6 @@ package-lock.json
 
 # OS files
 .DS_Store
+
+# VS Code Chrome debugging profile
+.vscode/chrome-debug-profile/
