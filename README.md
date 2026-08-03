@@ -186,7 +186,7 @@ src/
   app.d.ts             app type declarations (Locals, Platform)
   app.css              tailwind import and daisyui plugin
   hooks.server.ts      creates the db client, runs migrations, emits access logs
-  lib/site.ts          static site metadata and indexability flag
+  lib/site.ts          site metadata, manifest settings, and indexability flag
   lib/server/logger.ts structured logfmt logger
   lib/server/database/ kysely orm layer
     schema.ts          table and database types
@@ -200,20 +200,21 @@ src/
     +page.svelte       landing page
     +error.svelte      error page
     robots.txt/        dynamic robots.txt driven by site.indexable
+    site.webmanifest/  dynamic manifest driven by site metadata
 scripts/
   migrate-db.ts        standalone migration runner (local d1 via platform proxy)
-static/                favicon, web manifest, robots.txt
+static/                favicon and robots.txt
 ```
 
 ## Customizing for a new application
 
 1. Update `name` and `version` in `package.json` and `wrangler.jsonc`.
-2. Edit `src/lib/site.ts` to set the app's title, description, author, and
+2. Edit `src/lib/site.ts` to set the app metadata, web manifest settings, and
    whether it should be `indexable`.
 3. Rename the `APP_` env prefix everywhere if a project-specific prefix is
    preferred (`svelte.config.js`, `vite.config.ts`, `.env.example`, and
    `$env/static/public` references in routes).
-4. Replace `static/favicon.svg` and the manifest details.
+4. Replace `static/favicon.svg`.
 
 ## Deployment
 
