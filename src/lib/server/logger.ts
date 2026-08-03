@@ -1,6 +1,8 @@
 import { dev } from "$app/environment";
+import { formatLine, type LogLevel } from "./logfmt";
 
-export type LogLevel = "debug" | "info" | "warn" | "error";
+export type { LogLevel };
+
 type Fields = Record<string, unknown>;
 
 const LEVEL_VALUE: Record<LogLevel, number> = {
@@ -12,40 +14,13 @@ const LEVEL_VALUE: Record<LogLevel, number> = {
 
 const minLevel: LogLevel = dev ? "debug" : "info";
 
-function formatValue(value: unknown): string {
-	let str: string;
-
-	if (value === null || value === undefined) {
-		return "";
-	}
-	if (typeof value === "number" || typeof value === "boolean") {
-		str = String(value);
-	} else if (typeof value === "string") {
-		str = value;
-	} else {
-		str = JSON.stringify(value);
-	}
-
-	if (/[\s="]/.test(str)) {
-		return `"${str.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
-	}
-	return str;
-}
-
 function emit(level: LogLevel, msg: string, fields: Fields): void {
 	if (LEVEL_VALUE[level] < LEVEL_VALUE[minLevel]) {
 		return;
 	}
 
-	const parts = [`msg=${formatValue(msg)}`, `level=${level}`, `ts=${new Date().toISOString()}`];
-	for (const [key, value] of Object.entries(fields)) {
-		const formatted = formatValue(value);
-		if (formatted !== "") {
-			parts.push(`${key}=${formatted}`);
-		}
-	}
+	const line = formatLine(level, msg, fields);
 
-	const line = parts.join(" ");
 	if (level === "error") {
 		console.error(line);
 	} else if (level === "warn") {
