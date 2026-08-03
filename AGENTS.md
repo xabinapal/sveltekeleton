@@ -141,7 +141,8 @@ children?.()}`; use optional chaining for optional snippets.
 
 - Ask before adding, removing, or upgrading dependencies.
 - Prefer the Node standard library and packages already in the repo over new
-  ones. Pin versions with caret ranges.
+  ones. Pin every npm dependency to an exact version; range constraints such as
+  `^`, `~`, `>`, `<`, or `*` are not allowed.
 - npm blocks install scripts by default; if a newly added native dependency
   needs one, add it under `allowScripts` in `package.json`.
 
