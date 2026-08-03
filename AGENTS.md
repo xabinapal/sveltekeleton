@@ -23,8 +23,8 @@ predictability matter more than cleverness.
 - **Svelte Headless Table** for data tables, filtering, sorting, and pagination.
 - **Vite** as the build/dev server.
 - **mise** manages tools (Node, npm) and runs every task.
-- **ESLint + Prettier** for lint/format, **svelte-check** for types, **vitest**
-  for unit tests, **logfmt** structured logging.
+- **ESLint + Prettier** for lint/format, **svelte-check** for types, **Vitest +
+  Testing Library** for tests, **logfmt** structured logging.
 
 ## Commands
 
@@ -40,7 +40,7 @@ All work flows through mise, which delegates to npm scripts:
 | `mise run format`  | Format with Prettier                  |
 | `mise run lint`    | Prettier check + ESLint               |
 | `mise run check`   | svelte-check type checking            |
-| `mise run test`    | Run unit tests                        |
+| `mise run test`    | Run all test suites                   |
 | `mise run migrate` | Apply D1 migrations (local)           |
 | `mise run reset`   | Wipe local D1 and re-apply migrations |
 
@@ -110,6 +110,8 @@ children?.()}`; use optional chaining for optional snippets.
   already-loaded datasets. For large or remote datasets, use server-side plugin
   mode and keep query state in the URL. Render semantic table markup, preserve
   accessible labels and sort state, and style it with daisyUI table primitives.
+  Columns are initialization-time structure; rows may update reactively. Remount
+  the component when changing the column structure.
 - **SSR safety.** Never store per-user data in module-level `let` or global
   `$state` — it leaks across requests on the server. Per-user data flows through
   `event.locals` and is returned from `load`. (App-wide singletons like the
@@ -175,10 +177,12 @@ children?.()}`; use optional chaining for optional snippets.
 
 ## Verification gates (mandatory)
 
-- After coding — even small edits — run `mise run format`, `mise run lint`, and
-  `mise run check`. Add `mise run test` when tests are involved.
-- A **pre-commit hook** automatically runs `format`, `lint`, and `check` on every
-  commit and aborts on failure. Never bypass it with `--no-verify`.
+- After application or configuration changes, run `mise run format`,
+  `mise run lint`, `mise run check`, and `mise run test`. Documentation-only
+  changes may omit tests.
+- A **pre-commit hook** automatically runs `format`, `lint`, `check`, and the
+  complete test suite on every commit and aborts on failure. Never bypass it
+  with `--no-verify`.
 - Do not consider work done until all gates pass. Type errors and lint failures
   are not acceptable.
 
@@ -202,17 +206,24 @@ children?.()}`; use optional chaining for optional snippets.
 
 ## Testing
 
-- **Unit tests only** for now — no UI/DOM tests, no end-to-end tests, no
-  integration tests that spin up infrastructure.
-- Tests must be **self-contained**: mock storage and any external resource. A
-  test run must never require D1, KV, Workers, or network access.
-- **Test-first (TDD)** for new logic: write the test, watch it fail, implement,
-  watch it pass. But **don't overtest** — write meaningful tests for real
-  behavior, not a test per trivial getter or for every branch of every function.
-- Keep logic **pure and separable** so it's testable without framework imports
-  (see `src/lib/server/logfmt.ts` + its test as the pattern). Code that needs
-  `$app/*` or bindings should be a thin wrapper around pure logic.
-- Test files sit next to the module as `*.test.ts`. Run them with `mise run test`.
+- **Test-first (TDD)** for new logic and bug fixes: write the smallest meaningful
+  failing test, implement, and refactor while it stays green. Do not describe
+  tests written after implementation as TDD.
+- Node unit tests sit beside modules as `*.test.ts`. They cover validation,
+  services, state transitions, error handling, and storage orchestration with
+  fakes or mocks; they never require Workers, D1, KV, or network access.
+- Svelte component tests use `*.component.test.ts`, Testing Library, and jsdom.
+  Test accessible markup and application-owned event wiring, not Svelte,
+  daisyUI, Superforms, or headless-table internals.
+- Local integration tests live under `tests/integration/`. They may use Wrangler
+  bindings only with `persist: false` and `remoteBindings: false`; they must be
+  deterministic, isolated, and incapable of touching Cloudflare resources.
+- Do not duplicate dependency test suites. Test this application's schema
+  policy and wrapper contracts, not Zod coercion mechanics, Kysely SQL text,
+  Superforms serialization, or headless-table algorithms.
+- Keep I/O behind narrow interfaces and inject clocks, identifiers, and stores
+  when their behavior matters. Routes and components remain thin adapters.
+- `mise run test` runs all three suites and is mandatory for application changes.
 
 ## UI work — read DESIGN.md first
 

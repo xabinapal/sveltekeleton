@@ -1,12 +1,17 @@
 <script lang="ts">
-	import { untrack } from "svelte";
-	import { superForm } from "sveltekit-superforms";
 	import DataTable from "$lib/components/data-table.svelte";
 	import type { DataTableColumn, DataTableRow } from "$lib/components/data-table";
+	import VisitCounterForm from "$lib/components/visit-counter-form.svelte";
 	import { site } from "$lib/site";
 	import type { PageProps } from "./$types";
 
-	const capabilities: DataTableRow[] = [
+	interface CapabilityRow extends DataTableRow {
+		capability: string;
+		library: string;
+		layer: string;
+	}
+
+	const capabilities: CapabilityRow[] = [
 		{ id: "routing", capability: "Routing", library: "SvelteKit", layer: "Application" },
 		{ id: "forms", capability: "Forms", library: "Superforms + Zod", layer: "Application" },
 		{
@@ -20,16 +25,15 @@
 		{ id: "styles", capability: "Components", library: "daisyUI", layer: "Interface" },
 		{ id: "css", capability: "Styling", library: "Tailwind CSS", layer: "Interface" },
 		{ id: "runtime", capability: "Runtime", library: "Cloudflare Workers", layer: "Platform" },
-		{ id: "testing", capability: "Unit testing", library: "Vitest", layer: "Quality" },
+		{ id: "testing", capability: "Testing", library: "Vitest + Testing Library", layer: "Quality" },
 	];
-	const capabilityColumns: DataTableColumn[] = [
+	const capabilityColumns: DataTableColumn<CapabilityRow>[] = [
 		{ key: "capability", label: "Capability" },
 		{ key: "library", label: "Library" },
 		{ key: "layer", label: "Layer" },
 	];
 
 	let { data }: PageProps = $props();
-	const { form, errors, enhance, message, submitting } = superForm(untrack(() => data.form));
 
 	type CacheResult = Awaited<typeof data.cache>;
 
@@ -77,34 +81,7 @@
 		</div>
 	</div>
 
-	<form method="POST" use:enhance class="flex flex-col items-center gap-4">
-		<label class="fieldset" for="increment-amount">
-			<span class="fieldset-legend">Increment by</span>
-			<input
-				id="increment-amount"
-				type="number"
-				name="amount"
-				min="1"
-				max="100"
-				class="input w-24 text-center"
-				class:input-error={$errors.amount}
-				bind:value={$form.amount}
-				aria-invalid={$errors.amount ? "true" : undefined}
-				aria-describedby={$errors.amount ? "amount-errors" : undefined}
-			/>
-			{#if $errors.amount}
-				<p id="amount-errors" class="label text-error">{$errors.amount.join(", ")}</p>
-			{/if}
-		</label>
-
-		<button class="btn btn-primary" disabled={$submitting}>
-			{$submitting ? "Incrementing…" : "Increment"}
-		</button>
-	</form>
-
-	{#if $message}
-		<div class="alert alert-success max-w-sm" role="status">{$message}</div>
-	{/if}
+	<VisitCounterForm data={data.form} />
 
 	<div class="divider"></div>
 
@@ -113,6 +90,11 @@
 			<h2 class="text-2xl font-bold">Starter capabilities</h2>
 			<p class="opacity-70">Filter, sort, and paginate the included application stack.</p>
 		</div>
-		<DataTable columns={capabilityColumns} rows={capabilities} searchLabel="Filter capabilities" />
+		<DataTable
+			caption="Starter capabilities"
+			columns={capabilityColumns}
+			rows={capabilities}
+			searchLabel="Filter capabilities"
+		/>
 	</div>
 </section>

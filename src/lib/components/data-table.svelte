@@ -1,18 +1,24 @@
-<script lang="ts">
+<script lang="ts" generics="Row extends DataTableRow">
 	import { untrack } from "svelte";
 	import { toStore } from "svelte/store";
 	import { createTable } from "@humanspeak/svelte-headless-table";
 	import { addPagination, addSortBy, addTableFilter } from "@humanspeak/svelte-headless-table/plugins";
 	import type { DataTableColumn, DataTableRow } from "./data-table";
 
-	interface Props {
-		columns: DataTableColumn[];
-		rows: DataTableRow[];
+	let {
+		caption,
+		columns,
+		rows,
+		searchLabel = "Search",
+		initialPageSize = 5,
+	}: {
+		caption: string;
+		columns: DataTableColumn<Row>[];
+		rows: Row[];
 		searchLabel?: string;
 		initialPageSize?: 5 | 10 | 20;
-	}
-
-	let { columns, rows, searchLabel = "Search", initialPageSize = 5 }: Props = $props();
+	} = $props();
+	const initialColumns = untrack(() => columns.map((column) => ({ ...column })));
 
 	const source = toStore(() => rows);
 	const table = createTable(source, {
@@ -23,14 +29,12 @@
 		page: addPagination({ initialPageSize: untrack(() => initialPageSize) }),
 	});
 	const tableColumns = table.createColumns(
-		untrack(() =>
-			columns.map((column) =>
-				table.column({
-					header: column.label,
-					accessor: (row) => row[column.key],
-					id: column.key,
-				}),
-			),
+		initialColumns.map((column) =>
+			table.column({
+				header: column.label,
+				accessor: (row) => row[column.key],
+				id: column.key,
+			}),
 		),
 	);
 	const {
@@ -51,6 +55,11 @@
 	function toggleSort(columnKey: string) {
 		sortKeys.toggleId(columnKey, { multiSort: false });
 		pageIndex.set(0);
+	}
+
+	function cellValue(row: Row, column: DataTableColumn<Row>) {
+		const value = row[column.key];
+		return column.format ? column.format(value, row) : value;
 	}
 </script>
 
@@ -79,9 +88,10 @@
 
 	<div class="overflow-x-auto rounded-box border border-base-300">
 		<table class="table table-zebra">
+			<caption class="sr-only">{caption}</caption>
 			<thead>
 				<tr>
-					{#each columns as column (column.key)}
+					{#each initialColumns as column (column.key)}
 						<th
 							scope="col"
 							class:text-right={column.align === "end"}
@@ -89,7 +99,7 @@
 								? "ascending"
 								: sortOrder(column.key) === "desc"
 									? "descending"
-									: "none"}
+									: undefined}
 						>
 							<button
 								type="button"
@@ -115,13 +125,13 @@
 			<tbody>
 				{#each $pageRows as row (row.id)}
 					<tr>
-						{#each columns as column (column.key)}
-							<td class:text-right={column.align === "end"}>{row.original[column.key]}</td>
+						{#each initialColumns as column (column.key)}
+							<td class:text-right={column.align === "end"}>{cellValue(row.original, column)}</td>
 						{/each}
 					</tr>
 				{:else}
 					<tr>
-						<td colspan={columns.length} class="py-8 text-center opacity-70">No matching rows</td>
+						<td colspan={initialColumns.length} class="py-8 text-center opacity-70">No matching rows</td>
 					</tr>
 				{/each}
 			</tbody>
@@ -141,7 +151,7 @@
 				<button
 					type="button"
 					class="btn join-item"
-					disabled={!$hasPreviousPage}
+					disabled={$pageCount === 0 || !$hasPreviousPage}
 					onclick={() => pageIndex.update((index) => index - 1)}
 				>
 					Previous
@@ -149,7 +159,7 @@
 				<button
 					type="button"
 					class="btn join-item"
-					disabled={!$hasNextPage}
+					disabled={$pageCount === 0 || !$hasNextPage}
 					onclick={() => pageIndex.update((index) => index + 1)}
 				>
 					Next

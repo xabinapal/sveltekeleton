@@ -1,12 +1,12 @@
-export type DataTableValue = string | number;
+export type DataTableValue = string | number | boolean | null | undefined;
 
 export interface DataTableRow {
 	id: string;
-	[key: string]: DataTableValue;
 }
 
-export interface DataTableColumn {
-	key: string;
+export interface DataTableColumn<Row extends DataTableRow> {
+	key: Extract<keyof Row, string>;
 	label: string;
 	align?: "start" | "end";
+	format?: (value: Row[keyof Row], row: Row) => DataTableValue;
 }

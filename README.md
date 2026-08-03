@@ -48,6 +48,7 @@ defined in `package.json`.
 | `mise run lint`    | Run Prettier checks and ESLint          |
 | `mise run format`  | Format the codebase with Prettier       |
 | `mise run check`   | Run `svelte-check` type checking        |
+| `mise run test`    | Run all test suites                     |
 | `mise run migrate` | Run D1 migrations against the local DB  |
 | `mise run reset`   | Wipe local D1 and re-apply from scratch |
 
@@ -66,6 +67,20 @@ cp .env.example .env
 
 Static app identity — title, description, author, keywords, and theme color —
 lives in [`src/lib/site.ts`](src/lib/site.ts), not in env vars.
+
+## Testing
+
+`mise run test` runs three isolated Vitest suites:
+
+- Node unit tests beside source modules as `*.test.ts`.
+- Svelte component tests as `*.component.test.ts` using Testing Library and
+  jsdom.
+- Local D1 integration tests under `tests/integration/` using Wrangler with
+  persistence and remote bindings disabled.
+
+The integration suite creates an ephemeral local D1 database and cannot access
+production resources. The pre-commit hook runs the complete suite together with
+formatting, linting, and type checks.
 
 ### Search engine visibility
 
@@ -246,6 +261,9 @@ vite.config.ts         sveltekit plugin and dev server
 wrangler.jsonc         cloudflare workers deployment config
 tsconfig.json          strict typescript configuration
 eslint.config.js       eslint flat config
+vitest.config.ts       node unit test configuration
+vitest.component.config.ts  jsdom component test configuration
+vitest.integration.config.ts local Wrangler integration test configuration
 src/
   app.html             html shell
   app.d.ts             app type declarations (Locals, Platform)
