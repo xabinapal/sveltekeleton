@@ -31,7 +31,8 @@ mise run init   # install mise tools and npm dependencies
 mise run dev    # start the Vite dev server
 ```
 
-The dev server runs on `http://localhost:5173`.
+The dev server runs on `http://localhost:5173`. Startup applies pending local D1
+migrations, clears every application table, and inserts useful development data.
 
 ## Debugging
 
@@ -79,6 +80,7 @@ defined in `package.json`.
 | `mise run test-component`   | Run Svelte component tests              |
 | `mise run test-integration` | Run isolated local integration tests    |
 | `mise run migrate`          | Run D1 migrations against the local DB  |
+| `mise run preseed`          | Replace local D1 data with dummy data   |
 | `mise run reset`            | Wipe local D1 and re-apply from scratch |
 
 ## Environment variables
@@ -136,8 +138,13 @@ schema builder — never raw SQL.
 
 In `vite dev`, the `adapter-cloudflare` platform proxy exposes the D1 binding
 (`event.platform.env.DB`) backed by a local SQLite database stored under
-`.wrangler/`. Migrations also run automatically on the first request after a
-server start. Concurrent requests in one Worker isolate share the same
+`.wrangler/`. Before Vite starts, the development command applies pending
+migrations and replaces all application data with useful dummy records. The
+preseed is intentionally destructive and runs on every development server
+start, keeping the local database predictable without manual setup.
+
+Migrations also run automatically on the first request after a server start as
+a runtime safeguard. Concurrent requests in one Worker isolate share the same
 initialization. A migration failure fails the request and is retried rather than
 silently serving against a stale schema.
 
@@ -148,6 +155,17 @@ dev server):
 mise run migrate
 ```
 
+To clear every application table and insert fresh development data manually:
+
+```sh
+mise run preseed
+```
+
+The preseed command applies pending migrations first, uses Kysely rather than
+raw SQL, and always disables remote bindings. Its implementation lives entirely
+under `scripts/`; application code does not import it, so production builds and
+deployments neither execute nor bundle development seed logic.
+
 To wipe the local database and re-apply every migration from scratch (handy
 during development):
 
@@ -157,7 +175,7 @@ mise run reset
 
 This rolls all migrations back through their `down` methods and re-applies them,
 so each migration must have a `down`; reset aborts before changing the database
-if an irreversible migration is registered. Both database scripts explicitly
+if an irreversible migration is registered. All database scripts explicitly
 disable remote bindings.
 
 ### Writing migrations

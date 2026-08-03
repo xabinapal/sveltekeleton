@@ -33,7 +33,7 @@ All work flows through mise, which delegates to npm scripts:
 | Task                        | Purpose                                    |
 | --------------------------- | ------------------------------------------ |
 | `mise run init`             | Install tools and dependencies             |
-| `mise run dev`              | Start the dev server                       |
+| `mise run dev`              | Migrate, preseed, and start the dev server |
 | `mise run debug-chrome`     | Start the dev server with Chrome inspector |
 | `mise run build`            | Production build                           |
 | `mise run preview`          | Preview the production build               |
@@ -47,6 +47,7 @@ All work flows through mise, which delegates to npm scripts:
 | `mise run test-component`   | Run Svelte component tests                 |
 | `mise run test-integration` | Run isolated local integration tests       |
 | `mise run migrate`          | Apply D1 migrations (local)                |
+| `mise run preseed`          | Replace local D1 data with dummy data      |
 | `mise run reset`            | Wipe local D1 and re-apply migrations      |
 
 ## Project layout (stable categories)
@@ -60,7 +61,7 @@ All work flows through mise, which delegates to npm scripts:
 - `src/routes/` — SvelteKit routes and endpoints (`+page`, `+layout`, `+server`).
 - `src/lib/components/` — reusable Svelte components (built from daisyUI).
 - `static/` — static assets.
-- `scripts/` — dev scripts (migrate, reset-db).
+- `scripts/` — local-only development scripts (migrate, preseed, reset-db).
 - `mise.toml`, `wrangler.jsonc`, `svelte.config.js`, `vite.config.ts`,
   `vitest.config.ts`, `tsconfig.json`, `eslint.config.js`.
 
@@ -167,6 +168,19 @@ breakpoints` with `F5`. It runs `mise run dev` in VS Code's debug terminal and
 - Migrations run automatically before the first request and on demand via
   `mise run migrate`. Initialization is single-flight per Worker isolate,
   migration failures fail the request and are retried on the next request.
+- `mise run dev` applies migrations and then preseed data before Vite starts.
+  Preseeding is destructive: it clears every application table in dependency
+  order and inserts representative, useful dummy records. Run the same behavior
+  manually with `mise run preseed`.
+- Every database schema change must update `scripts/database/preseed.ts` in the
+  same change. Add every new table to the complete deletion order and add seed
+  records for new tables, required columns, and relationships without waiting
+  for a separate request. Keep data varied but bounded and useful for exercising
+  the application.
+- Keep preseed code under `scripts/` and never import it from application code,
+  ensuring production builds cannot include or execute it. Preseed only local
+  Wrangler bindings with `remoteBindings: false`. Use Kysely for deletion and
+  insertion rather than raw SQL.
 - D1 does not support the transactions or cross-isolate locks expected by
   Kysely's SQLite migrator. Every migration must therefore be replay-safe; use
   `ifNotExists`, conflict handling, and other idempotent operations where needed.

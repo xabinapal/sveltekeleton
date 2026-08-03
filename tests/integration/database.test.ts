@@ -2,6 +2,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import type { D1Database } from "@cloudflare/workers-types";
 import type { Kysely } from "kysely";
 import { getPlatformProxy, type PlatformProxy } from "wrangler";
+import { preseedDatabase } from "../../scripts/database/preseed";
 import { createDatabase } from "../../src/lib/server/database/db";
 import { initial } from "../../src/lib/server/database/migrations/0001_initial";
 import { runMigrations } from "../../src/lib/server/database/migrator";
@@ -44,6 +45,16 @@ describe.sequential("D1 integration", () => {
 
 		await expect(repository.increment(3)).resolves.toBe(true);
 		await expect(repository.getCount()).resolves.toBe(3);
+	});
+
+	it("clears application tables before inserting useful development data", async () => {
+		await db.updateTable("visits").set({ count: 999 }).where("id", "=", 1).execute();
+		await db.insertInto("visits").values({ id: 2, count: 7 }).execute();
+
+		const result = await preseedDatabase(db, () => 0);
+
+		await expect(db.selectFrom("visits").selectAll().orderBy("id").execute()).resolves.toEqual([{ id: 1, count: 25 }]);
+		expect(result).toEqual({ visits: 1, visitCount: 25 });
 	});
 
 	it("keeps the initial migration replay-safe", async () => {
